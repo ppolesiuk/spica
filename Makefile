@@ -9,16 +9,19 @@ CFLAGS += -Wall -pedantic -std=c11 -O2 -march=native -mtune=native
 .PHONY: all clean doc
 
 SRCS = \
-	SImage.c
+	SImage.c \
+	SImageIO.c
 
 PUBLIC_HDRS = \
+	SCommon.h \
 	SImage.h \
+	SImageIO.h \
 	SVec.h
 
 OBJS=$(patsubst %, $(BLDDIR)/%.o, $(basename $(SRCS)))
 PUBHDRS=$(patsubst %, $(INCLUDEDIR)/%, $(PUBLIC_HDRS))
 
-all: $(LIBDIR)/$(TARGET) $(PUBHDRS) doc
+all: $(LIBDIR)/$(TARGET) $(PUBHDRS)
 
 doc:
 	doxygen

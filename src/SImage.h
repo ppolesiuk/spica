@@ -116,4 +116,51 @@ SImage_t *SImage_alloc(
 void SImage_free(
   SImage_t *image);
 
+/** \brief Pointer to given image row
+ *
+ * \param image Image 
+ * \param y     The number of a row
+ *
+ * \return Pointer to image row data. For \ref SFmt_Invalid or
+ *   \ref SFmt_SeparateRGB images returns NULL. */
+void *SImage_row(
+  const SImage_t *image,
+  unsigned        y);
+
+/** \brief Pointer to given image row for the red channel
+ *
+ * \param image Image
+ * \param y     The number of a row
+ *
+ * \return Pointer to image row data for the red channel. For \ref SFmt_Gray
+ *  returns pointer to \p y -th row. For \ref SFmt_Invalid or \ref SFmt_RGB
+ *  returns NULL. */
+SVec2f_t *SImage_rowRed(
+  const SImage_t *image,
+  unsigned        y);
+
+/** \brief Pointer to given image row for the green channel
+ *
+ * \param image Image
+ * \param y     The number of a row
+ *
+ * \return Pointer to image row data for the green channel. For \ref SFmt_Gray
+ *  returns pointer to \p y -th row. For \ref SFmt_Invalid or \ref SFmt_RGB
+ *  returns NULL. */
+SVec2f_t *SImage_rowGreen(
+  const SImage_t *image,
+  unsigned        y);
+
+/** \brief Pointer to given image row for the blue channel
+ *
+ * \param image Image
+ * \param y     The number of a row
+ *
+ * \return Pointer to image row data for the blue channel. For \ref SFmt_Gray
+ *  returns pointer to \p y -th row. For \ref SFmt_Invalid or \ref SFmt_RGB
+ *  returns NULL. */
+SVec2f_t *SImage_rowBlue(
+  const SImage_t *image,
+  unsigned        y);
+
 #endif /* __SPICA_IMAGE_H__ */
