@@ -34,7 +34,9 @@ typedef enum SPixFormat {
  * \param fname File name of the PNG image
  *
  * \return \ref SPICA_OK on success or \ref SPICA_ERROR on fail. On error the
- *   \p image is initialized as \ref SFmt_Invalid image. */
+ *   \p image is initialized as \ref SFmt_Invalid image.
+ *
+ * \sa SImage_loadPNG */
 int SImage_loadPNG_at(
   SImage_t   *image,
   const char *fname);
@@ -44,7 +46,9 @@ int SImage_loadPNG_at(
  * \param fname File name of the PNG image
  *
  * \return newly allocated \ref SImage_t. The image should be freed using
- *   \ref SImage_free function. */
+ *   \ref SImage_free function.
+ *
+ * \sa SImage_loadPNG_at */
 SImage_t *SImage_loadPNG(
   const char *fname);
 
