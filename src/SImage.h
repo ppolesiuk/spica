@@ -256,8 +256,121 @@ SVec2f_t *SImage_rowBlue(
  * \param tgt Image on which pixels are stacked
  * \param x_offset X-offset of \p src image, used while stacking
  * \param y_offset Y-offset of \p src image, used while stacking
- * \param src Soucre image */
+ * \param src Soucre image
+ *
+ * \sa SImage_mask, SImage_add */
 void SImage_stack(
+  SImage_t       *tgt,
+  int             x_offset,
+  int             y_offset,
+  const SImage_t *src);
+
+/** \brief Apply mask on image
+ *
+ * Applying mask is a multiplication both pixel values and weight by a 
+ * normalized value of corresponding pixel from a mask. Because it uses
+ * multiplication of value-weight vector by a scalar, using color masks
+ * makes sense only for \ref SFmt_SeparateRGB images. For different formats,
+ * mask is converted to \ref SFmt_Gray before applying.
+ *
+ * \param image Image to be masked
+ * \param x_offset X-offset of a mask
+ * \param y_offset Y-offset of a mask
+ * \param mask Mask image
+ *
+ * \sa SImage_mul */
+void SImage_mask(
+  SImage_t       *image,
+  int             x_offset,
+  int             y_offset,
+  const SImage_t *mask);
+
+/** \brief Add one image to another
+ *
+ * This function arithemtically adds pixel values from \p src image to
+ * corresponding pixels of \p tgt image. In contrast to \ref SImage_stack
+ * values normalized with respect to pixel weight are added, so this function
+ * implements arithmetical addition instead of weighted mean. Weights in
+ * \p tgt image are not changed by this function.
+ *
+ * Images may have different formats. If so, the \p src image is internally
+ * converted to the format of \p tgt image, before the operation, while
+ * original \p src remains untouched.
+ *
+ * \param tgt Target image of an addition
+ * \param x_offset X-offset of \p src image
+ * \param y_offset Y-offset of \p src image
+ * \param src Soucre image
+ *
+ * \sa SImage_stack, SImage_sub, SImage_mul, SImage_div */
+void SImage_add(
+  SImage_t       *tgt,
+  int             x_offset,
+  int             y_offset,
+  const SImage_t *src);
+
+/** \brief Subtract one image to another
+ *
+ * This function arithemtically subtract pixel of \p src image from
+ * corresponding pixels of \p tgt image. This function operates on values
+ * normalized with respect to pixel weight. Weights remain unchanged.
+ *
+ * Images may have different formats. If so, the \p src image is internally
+ * converted to the format of \p tgt image, before the operation, while
+ * original \p src remains untouched.
+ *
+ * \param tgt Target image of a subtraction
+ * \param x_offset X-offset of \p src image
+ * \param y_offset Y-offset of \p src image
+ * \param src Soucre image, to be subtracted from \p tgt image
+ *
+ * \sa SImage_add, SImage_mul, SImage_div */
+void SImage_sub(
+  SImage_t       *tgt,
+  int             x_offset,
+  int             y_offset,
+  const SImage_t *src);
+
+/** \brief Multiply one image by another
+ *
+ * This function arithemtically multiply pixel of \p dst image by
+ * corresponding pixels of \p src image. This function operates on values
+ * normalized with respect to pixel weight. In contrast to \ref SImage_mask
+ * weights remain unchanged.
+ *
+ * Images may have different formats. If so, the \p src image is internally
+ * converted to the format of \p tgt image, before the operation, while
+ * original \p src remains untouched.
+ *
+ * \param tgt Target image of a multiplication and one of factor
+ * \param x_offset X-offset of \p src image
+ * \param y_offset Y-offset of \p src image
+ * \param src Soucre image -- the another factor
+ *
+ * \sa SImage_mask, SImage_add, SImage_sub, SImage_div */
+void SImage_mul(
+  SImage_t       *tgt,
+  int             x_offset,
+  int             y_offset,
+  const SImage_t *src);
+
+/** \brief Divide one image by another
+ *
+ * This function arithemtically divide pixel of \p dst image by
+ * corresponding pixels of \p src image. This function operates on values
+ * normalized with respect to pixel weight. Weights remain unchanged.
+ *
+ * Images may have different formats. If so, the \p src image is internally
+ * converted to the format of \p tgt image, before the operation, while
+ * original \p src remains untouched.
+ *
+ * \param tgt Target image, and the divident
+ * \param x_offset X-offset of \p src image
+ * \param y_offset Y-offset of \p src image
+ * \param src Soucre image -- the divisor
+ *
+ * \sa SImage_add, SImage_sub, SImage_mul */
+void SImage_div(
   SImage_t       *tgt,
   int             x_offset,
   int             y_offset,

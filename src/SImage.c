@@ -318,6 +318,36 @@ SVec2f_t *SImage_rowBlue(const SImage_t *image, unsigned y) {
 }
 
 /* ========================================================================= */
+/* Frames */
+
+typedef struct frame {
+  int min_x;
+  int max_x;
+  int min_y;
+  int max_y;
+  int tgt_w;
+  int src_w;
+} frame_t;
+
+static frame_t setFrame(
+  const SImage_t *tgt,
+  const SImage_t *src,
+  int x_offset,
+  int y_offset)
+{
+  frame_t f;
+  f.min_x = x_offset > 0 ? x_offset : 0;
+  f.min_y = y_offset > 0 ? y_offset : 0;
+  f.max_x = (int)src->width  + x_offset;
+  f.max_y = (int)src->height + y_offset;
+  if ((int)tgt->width  < f.max_x) f.max_x = tgt->width;
+  if ((int)tgt->height < f.max_y) f.max_y = tgt->height;
+  f.tgt_w = tgt->width;
+  f.src_w = src->width;
+  return f;
+}
+
+/* ========================================================================= */
 /* SImage_stack */
 
 static void stackGray(
@@ -325,19 +355,11 @@ static void stackGray(
   const SImage_t *src, const SVec2f_t *src_data,
   int x_offset, int y_offset)
 {
-  int min_x = x_offset > 0 ? x_offset : 0;
-  int min_y = y_offset > 0 ? y_offset : 0;
-  int max_x = (int)src->width  + x_offset;
-  int max_y = (int)src->height + y_offset;
-  if ((int)tgt->width  < max_x) max_x = tgt->width;
-  if ((int)tgt->height < max_y) max_y = tgt->height;
-  int tgt_w = tgt->width;
-  int src_w = src->width;
-
-  for (int y = min_y; y < max_y; y++) {
-    for (int x = min_x; x < max_x; x++) {
-      tgt_data[y * tgt_w + x] +=
-        src_data[(y - y_offset) * src_w + x - x_offset];
+  frame_t f = setFrame(tgt, src, x_offset, y_offset);
+  for (int y = f.min_y; y < f.max_y; y++) {
+    for (int x = f.min_x; x < f.max_x; x++) {
+      tgt_data[y * f.tgt_w + x] +=
+        src_data[(y - y_offset) * f.src_w + x - x_offset];
     }
   }
 }
@@ -347,19 +369,11 @@ static void stackRGB(
   const SImage_t *src, const SVec4f_t *src_data,
   int x_offset, int y_offset)
 {
-  int min_x = x_offset > 0 ? x_offset : 0;
-  int min_y = y_offset > 0 ? y_offset : 0;
-  int max_x = (int)src->width  + x_offset;
-  int max_y = (int)src->height + y_offset;
-  if ((int)tgt->width  < max_x) max_x = tgt->width;
-  if ((int)tgt->height < max_y) max_y = tgt->height;
-  int tgt_w = tgt->width;
-  int src_w = src->width;
-
-  for (int y = min_y; y < max_y; y++) {
-    for (int x = min_x; x < max_x; x++) {
-      tgt_data[y * tgt_w + x] +=
-        src_data[(y - y_offset) * src_w + x - x_offset];
+  frame_t f = setFrame(tgt, src, x_offset, y_offset);
+  for (int y = f.min_y; y < f.max_y; y++) {
+    for (int x = f.min_x; x < f.max_x; x++) {
+      tgt_data[y * f.tgt_w + x] +=
+        src_data[(y - y_offset) * f.src_w + x - x_offset];
     }
   }
 }
@@ -404,17 +418,503 @@ static void stackSameFormat(
 void SImage_stack(
   SImage_t *tgt, int x_offset, int y_offset, const SImage_t *src)
 {
-  if (tgt->format == SFmt_Invalid || src->format == SFmt_Invalid) {
-    return;
-  }
+  if (tgt->format == SFmt_Invalid || src->format == SFmt_Invalid) return;
 
   if (src->format == tgt->format) {
     stackSameFormat(tgt, x_offset, y_offset, src);
   } else {
-    SImage_t *src2 = SImage_toFormat(src, tgt->format);
-    if (src2->format != SFmt_Invalid) {
-      stackSameFormat(tgt, x_offset, y_offset, src2);
+    SImage_t src2;
+    SImage_toFormat_at(&src2, src, tgt->format);
+    if (src2.format != SFmt_Invalid) {
+      stackSameFormat(tgt, x_offset, y_offset, &src2);
     }
-    SImage_free(src2);
+    SImage_deinit(&src2);
+  }
+}
+
+/* ========================================================================= */
+/* SImage_mask */
+
+static void maskGray(
+        SImage_t *tgt,       SVec2f_t *tgt_data,
+  const SImage_t *src, const SVec2f_t *src_data,
+  int x_offset, int y_offset)
+{
+  frame_t f = setFrame(tgt, src, x_offset, y_offset);
+  for (int y = f.min_y; y < f.max_y; y++) {
+    for (int x = f.min_x; x < f.max_x; x++) {
+      SVec2f_t pix = src_data[(y - y_offset) * f.src_w + x - x_offset];
+      if (pix[1] == 0.0f) continue;
+      tgt_data[y * f.tgt_w + x] *= pix[0] / pix[1];
+    }
+  }
+}
+
+static void maskRGB(
+        SImage_t *tgt,       SVec4f_t *tgt_data,
+  const SImage_t *src, const SVec2f_t *src_data,
+  int x_offset, int y_offset)
+{
+  frame_t f = setFrame(tgt, src, x_offset, y_offset);
+  for (int y = f.min_y; y < f.max_y; y++) {
+    for (int x = f.min_x; x < f.max_x; x++) {
+      SVec2f_t pix = src_data[(y - y_offset) * f.src_w + x - x_offset];
+      if (pix[1] == 0.0f) continue;
+      tgt_data[y * f.tgt_w + x] *= pix[0] / pix[1];
+    }
+  }
+}
+
+static void maskSeparateRGB_with_RGB(
+  SImage_t *image, int x_offset, int y_offset, const SImage_t *mask)
+{
+  SVec2f_t *rdata = SImage_dataRed(image);
+  SVec2f_t *gdata = SImage_dataGreen(image);
+  SVec2f_t *bdata = SImage_dataBlue(image);
+  SVec4f_t *mdata = mask->data_rgb;
+
+  frame_t f = setFrame(image, mask, x_offset, y_offset);
+  for (int y = f.min_y; y < f.max_y; y++) {
+    for (int x = f.min_x; x < f.max_x; x++) {
+      SVec4f_t pix = mdata[(y - y_offset) * f.src_w + x - x_offset];
+      if (pix[3] == 0.0f) continue;
+      pix /= pix[3];
+      rdata[y * f.tgt_w + x] *= pix[0];
+      gdata[y * f.tgt_w + x] *= pix[1];
+      bdata[y * f.tgt_w + x] *= pix[2];
+    }
+  }
+}
+
+static void maskWithGray(
+  SImage_t *image, int x_offset, int y_offset, const SImage_t *mask)
+{
+  switch (image->format) {
+  case SFmt_Invalid:
+  case SFmt_SeparateRGB:
+    assert(0 && "Impossible case");
+    return;
+  case SFmt_Gray:
+    maskGray(
+      image, image->data_gray,
+      mask,  mask->data_gray,
+      x_offset, y_offset);
+    return;
+  case SFmt_RGB:
+    maskRGB(
+      image, image->data_rgb,
+      mask,  mask->data_gray,
+      x_offset, y_offset);
+    return;
+  }
+}
+
+void SImage_mask(
+  SImage_t *image, int x_offset, int y_offset, const SImage_t *mask)
+{
+  if (mask->format == SFmt_Invalid) return;
+
+  switch (image->format) {
+  case SFmt_Invalid:
+    return;
+  case SFmt_Gray:
+  case SFmt_RGB:
+    if (mask->format == SFmt_Gray) {
+      maskWithGray(image, x_offset, y_offset, mask);
+    } else {
+      SImage_t mask2;
+      SImage_toFormat_at(&mask2, mask, SFmt_Gray);
+      if (mask2.format != SFmt_Invalid)
+        maskWithGray(image, x_offset, y_offset, &mask2);
+      SImage_deinit(&mask2);
+    }
+    return;
+  case SFmt_SeparateRGB:
+    switch (mask->format) {
+    case SFmt_Invalid:
+      assert(0 && "Impossible case");
+      return;
+    case SFmt_Gray:
+    case SFmt_SeparateRGB:
+      maskGray(
+        image, SImage_dataRed(image),
+        mask,  SImage_dataRed(mask),
+        x_offset, y_offset);
+      maskGray(
+        image, SImage_dataGreen(image),
+        mask,  SImage_dataGreen(mask),
+        x_offset, y_offset);
+      maskGray(
+        image, SImage_dataBlue(image),
+        mask,  SImage_dataBlue(mask),
+        x_offset, y_offset);
+      return;
+    case SFmt_RGB:
+      maskSeparateRGB_with_RGB(image, x_offset, y_offset, mask);
+      return;
+    }
+    return;
+  }
+}
+
+/* ========================================================================= */
+/* SImage_add */
+
+static void addGray(
+        SImage_t *tgt,       SVec2f_t *tgt_data,
+  const SImage_t *src, const SVec2f_t *src_data,
+  int x_offset, int y_offset)
+{
+  frame_t f = setFrame(tgt, src, x_offset, y_offset);
+  for (int y = f.min_y; y < f.max_y; y++) {
+    for (int x = f.min_x; x < f.max_x; x++) {
+      SVec2f_t spix = src_data[(y - y_offset) * f.src_w + x - x_offset];
+      if (spix[1] == 0.0f) continue;
+      SVec2f_t tpix = tgt_data[y * f.tgt_w + x];
+      float v = spix[0] * tpix[1] / spix[1];
+      tgt_data[y * f.tgt_w + x][0] += v;
+    }
+  }
+}
+
+static void addRGB(
+        SImage_t *tgt,       SVec4f_t *tgt_data,
+  const SImage_t *src, const SVec4f_t *src_data,
+  int x_offset, int y_offset)
+{
+  frame_t f = setFrame(tgt, src, x_offset, y_offset);
+  for (int y = f.min_y; y < f.max_y; y++) {
+    for (int x = f.min_x; x < f.max_x; x++) {
+      SVec4f_t spix = src_data[(y - y_offset) * f.src_w + x - x_offset];
+      if (spix[3] == 0.0f) continue;
+      SVec4f_t tpix = tgt_data[y * f.tgt_w + x];
+      spix *= tpix[3] / spix[3];
+      spix[3] = 0.0f;
+      tgt_data[y * f.tgt_w + x] += spix;
+    }
+  }
+}
+
+static void addSameFormat(
+  SImage_t *tgt, int x_offset, int y_offset, const SImage_t *src)
+{
+  assert(src->format == tgt->format);
+
+  switch (tgt->format) {
+  case SFmt_Invalid:
+    return;
+  case SFmt_Gray:
+    addGray(
+      tgt, tgt->data_gray,
+      src, src->data_gray,
+      x_offset, y_offset);
+    break;
+  case SFmt_RGB:
+    addRGB(
+      tgt, tgt->data_rgb,
+      src, src->data_rgb,
+      x_offset, y_offset);
+    break;
+  case SFmt_SeparateRGB:
+    addGray(
+      tgt, SImage_dataRed(tgt),
+      src, SImage_dataRed(src),
+      x_offset, y_offset);
+    addGray(
+      tgt, SImage_dataGreen(tgt),
+      src, SImage_dataGreen(src),
+      x_offset, y_offset);
+    addGray(
+      tgt, SImage_dataBlue(tgt),
+      src, SImage_dataBlue(src),
+      x_offset, y_offset);
+    break;
+  }
+}
+
+void SImage_add(
+  SImage_t *tgt, int x_offset, int y_offset, const SImage_t *src)
+{
+  if (tgt->format == SFmt_Invalid || src->format == SFmt_Invalid) return;
+  
+  if (src->format == tgt->format) {
+    addSameFormat(tgt, x_offset, y_offset, src);
+  } else {
+    SImage_t src2;
+    SImage_toFormat_at(&src2, src, tgt->format);
+    if (src2.format != SFmt_Invalid) {
+      addSameFormat(tgt, x_offset, y_offset, &src2);
+    }
+    SImage_deinit(&src2);
+  }
+}
+
+/* ========================================================================= */
+/* SImage_sub */
+
+static void subGray(
+        SImage_t *tgt,       SVec2f_t *tgt_data,
+  const SImage_t *src, const SVec2f_t *src_data,
+  int x_offset, int y_offset)
+{
+  frame_t f = setFrame(tgt, src, x_offset, y_offset);
+  for (int y = f.min_y; y < f.max_y; y++) {
+    for (int x = f.min_x; x < f.max_x; x++) {
+      SVec2f_t spix = src_data[(y - y_offset) * f.src_w + x - x_offset];
+      if (spix[1] == 0.0f) continue;
+      SVec2f_t tpix = tgt_data[y * f.tgt_w + x];
+      float v = spix[0] * tpix[1] / spix[1];
+      tgt_data[y * f.tgt_w + x][0] -= v;
+    }
+  }
+}
+
+static void subRGB(
+        SImage_t *tgt,       SVec4f_t *tgt_data,
+  const SImage_t *src, const SVec4f_t *src_data,
+  int x_offset, int y_offset)
+{
+  frame_t f = setFrame(tgt, src, x_offset, y_offset);
+  for (int y = f.min_y; y < f.max_y; y++) {
+    for (int x = f.min_x; x < f.max_x; x++) {
+      SVec4f_t spix = src_data[(y - y_offset) * f.src_w + x - x_offset];
+      if (spix[3] == 0.0f) continue;
+      SVec4f_t tpix = tgt_data[y * f.tgt_w + x];
+      spix *= tpix[3] / spix[3];
+      spix[3] = 0.0f;
+      tgt_data[y * f.tgt_w + x] -= spix;
+    }
+  }
+}
+
+static void subSameFormat(
+  SImage_t *tgt, int x_offset, int y_offset, const SImage_t *src)
+{
+  assert(src->format == tgt->format);
+
+  switch (tgt->format) {
+  case SFmt_Invalid:
+    return;
+  case SFmt_Gray:
+    subGray(
+      tgt, tgt->data_gray,
+      src, src->data_gray,
+      x_offset, y_offset);
+    break;
+  case SFmt_RGB:
+    subRGB(
+      tgt, tgt->data_rgb,
+      src, src->data_rgb,
+      x_offset, y_offset);
+    break;
+  case SFmt_SeparateRGB:
+    subGray(
+      tgt, SImage_dataRed(tgt),
+      src, SImage_dataRed(src),
+      x_offset, y_offset);
+    subGray(
+      tgt, SImage_dataGreen(tgt),
+      src, SImage_dataGreen(src),
+      x_offset, y_offset);
+    subGray(
+      tgt, SImage_dataBlue(tgt),
+      src, SImage_dataBlue(src),
+      x_offset, y_offset);
+    break;
+  }
+}
+
+void SImage_sub(
+  SImage_t *tgt, int x_offset, int y_offset, const SImage_t *src)
+{
+  if (tgt->format == SFmt_Invalid || src->format == SFmt_Invalid) return;
+  
+  if (src->format == tgt->format) {
+    subSameFormat(tgt, x_offset, y_offset, src);
+  } else {
+    SImage_t src2;
+    SImage_toFormat_at(&src2, src, tgt->format);
+    if (src2.format != SFmt_Invalid) {
+      subSameFormat(tgt, x_offset, y_offset, &src2);
+    }
+    SImage_deinit(&src2);
+  }
+}
+
+/* ========================================================================= */
+/* SImage_mul */
+
+static void mulGray(
+        SImage_t *tgt,       SVec2f_t *tgt_data,
+  const SImage_t *src, const SVec2f_t *src_data,
+  int x_offset, int y_offset)
+{
+  frame_t f = setFrame(tgt, src, x_offset, y_offset);
+  for (int y = f.min_y; y < f.max_y; y++) {
+    for (int x = f.min_x; x < f.max_x; x++) {
+      SVec2f_t spix = src_data[(y - y_offset) * f.src_w + x - x_offset];
+      if (spix[1] == 0.0f) continue;
+      float v = spix[0] / spix[1];
+      tgt_data[y * f.tgt_w + x][0] *= v;
+    }
+  }
+}
+
+static void mulRGB(
+        SImage_t *tgt,       SVec4f_t *tgt_data,
+  const SImage_t *src, const SVec4f_t *src_data,
+  int x_offset, int y_offset)
+{
+  frame_t f = setFrame(tgt, src, x_offset, y_offset);
+  for (int y = f.min_y; y < f.max_y; y++) {
+    for (int x = f.min_x; x < f.max_x; x++) {
+      SVec4f_t spix = src_data[(y - y_offset) * f.src_w + x - x_offset];
+      if (spix[3] == 0.0f) continue;
+      spix *= 1.0f / spix[3];
+      tgt_data[y * f.tgt_w + x] *= spix;
+    }
+  }
+}
+
+static void mulSameFormat(
+  SImage_t *tgt, int x_offset, int y_offset, const SImage_t *src)
+{
+  assert(src->format == tgt->format);
+
+  switch (tgt->format) {
+  case SFmt_Invalid:
+    return;
+  case SFmt_Gray:
+    mulGray(
+      tgt, tgt->data_gray,
+      src, src->data_gray,
+      x_offset, y_offset);
+    break;
+  case SFmt_RGB:
+    mulRGB(
+      tgt, tgt->data_rgb,
+      src, src->data_rgb,
+      x_offset, y_offset);
+    break;
+  case SFmt_SeparateRGB:
+    mulGray(
+      tgt, SImage_dataRed(tgt),
+      src, SImage_dataRed(src),
+      x_offset, y_offset);
+    mulGray(
+      tgt, SImage_dataGreen(tgt),
+      src, SImage_dataGreen(src),
+      x_offset, y_offset);
+    mulGray(
+      tgt, SImage_dataBlue(tgt),
+      src, SImage_dataBlue(src),
+      x_offset, y_offset);
+    break;
+  }
+}
+
+void SImage_mul(
+  SImage_t *tgt, int x_offset, int y_offset, const SImage_t *src)
+{
+  if (tgt->format == SFmt_Invalid || src->format == SFmt_Invalid) return;
+  
+  if (src->format == tgt->format) {
+    mulSameFormat(tgt, x_offset, y_offset, src);
+  } else {
+    SImage_t src2;
+    SImage_toFormat_at(&src2, src, tgt->format);
+    if (src2.format != SFmt_Invalid) {
+      mulSameFormat(tgt, x_offset, y_offset, &src2);
+    }
+    SImage_deinit(&src2);
+  }
+}
+
+/* ========================================================================= */
+/* SImage_div */
+
+static void divGray(
+        SImage_t *tgt,       SVec2f_t *tgt_data,
+  const SImage_t *src, const SVec2f_t *src_data,
+  int x_offset, int y_offset)
+{
+  frame_t f = setFrame(tgt, src, x_offset, y_offset);
+  for (int y = f.min_y; y < f.max_y; y++) {
+    for (int x = f.min_x; x < f.max_x; x++) {
+      SVec2f_t spix = src_data[(y - y_offset) * f.src_w + x - x_offset];
+      if (spix[0] == 0.0f || spix[1] == 0.0f) continue;
+      float v = spix[1] / spix[0];
+      tgt_data[y * f.tgt_w + x][0] *= v;
+    }
+  }
+}
+
+static void divRGB(
+        SImage_t *tgt,       SVec4f_t *tgt_data,
+  const SImage_t *src, const SVec4f_t *src_data,
+  int x_offset, int y_offset)
+{
+  frame_t f = setFrame(tgt, src, x_offset, y_offset);
+  for (int y = f.min_y; y < f.max_y; y++) {
+    for (int x = f.min_x; x < f.max_x; x++) {
+      SVec4f_t spix = src_data[(y - y_offset) * f.src_w + x - x_offset];
+      if (spix[3] == 0.0f) continue;
+      spix *= 1.0f / spix[3];
+      tgt_data[y * f.tgt_w + x] /= spix;
+    }
+  }
+}
+
+static void divSameFormat(
+  SImage_t *tgt, int x_offset, int y_offset, const SImage_t *src)
+{
+  assert(src->format == tgt->format);
+
+  switch (tgt->format) {
+  case SFmt_Invalid:
+    return;
+  case SFmt_Gray:
+    divGray(
+      tgt, tgt->data_gray,
+      src, src->data_gray,
+      x_offset, y_offset);
+    break;
+  case SFmt_RGB:
+    divRGB(
+      tgt, tgt->data_rgb,
+      src, src->data_rgb,
+      x_offset, y_offset);
+    break;
+  case SFmt_SeparateRGB:
+    divGray(
+      tgt, SImage_dataRed(tgt),
+      src, SImage_dataRed(src),
+      x_offset, y_offset);
+    divGray(
+      tgt, SImage_dataGreen(tgt),
+      src, SImage_dataGreen(src),
+      x_offset, y_offset);
+    divGray(
+      tgt, SImage_dataBlue(tgt),
+      src, SImage_dataBlue(src),
+      x_offset, y_offset);
+    break;
+  }
+}
+
+void SImage_div(
+  SImage_t *tgt, int x_offset, int y_offset, const SImage_t *src)
+{
+  if (tgt->format == SFmt_Invalid || src->format == SFmt_Invalid) return;
+  
+  if (src->format == tgt->format) {
+    divSameFormat(tgt, x_offset, y_offset, src);
+  } else {
+    SImage_t src2;
+    SImage_toFormat_at(&src2, src, tgt->format);
+    if (src2.format != SFmt_Invalid) {
+      divSameFormat(tgt, x_offset, y_offset, &src2);
+    }
+    SImage_deinit(&src2);
   }
 }
