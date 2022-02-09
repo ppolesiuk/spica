@@ -316,3 +316,105 @@ SVec2f_t *SImage_rowBlue(const SImage_t *image, unsigned y) {
   }
   assert(0 && "Impossible case");
 }
+
+/* ========================================================================= */
+/* SImage_stack */
+
+static void stackGray(
+        SImage_t *tgt,       SVec2f_t *tgt_data,
+  const SImage_t *src, const SVec2f_t *src_data,
+  int x_offset, int y_offset)
+{
+  int min_x = x_offset > 0 ? x_offset : 0;
+  int min_y = y_offset > 0 ? y_offset : 0;
+  int max_x = (int)src->width  + x_offset;
+  int max_y = (int)src->height + y_offset;
+  if ((int)tgt->width  < max_x) max_x = tgt->width;
+  if ((int)tgt->height < max_y) max_y = tgt->height;
+  int tgt_w = tgt->width;
+  int src_w = src->width;
+
+  for (int y = min_y; y < max_y; y++) {
+    for (int x = min_x; x < max_x; x++) {
+      tgt_data[y * tgt_w + x] +=
+        src_data[(y - y_offset) * src_w + x - x_offset];
+    }
+  }
+}
+
+static void stackRGB(
+        SImage_t *tgt,       SVec4f_t *tgt_data,
+  const SImage_t *src, const SVec4f_t *src_data,
+  int x_offset, int y_offset)
+{
+  int min_x = x_offset > 0 ? x_offset : 0;
+  int min_y = y_offset > 0 ? y_offset : 0;
+  int max_x = (int)src->width  + x_offset;
+  int max_y = (int)src->height + y_offset;
+  if ((int)tgt->width  < max_x) max_x = tgt->width;
+  if ((int)tgt->height < max_y) max_y = tgt->height;
+  int tgt_w = tgt->width;
+  int src_w = src->width;
+
+  for (int y = min_y; y < max_y; y++) {
+    for (int x = min_x; x < max_x; x++) {
+      tgt_data[y * tgt_w + x] +=
+        src_data[(y - y_offset) * src_w + x - x_offset];
+    }
+  }
+}
+
+static void stackSameFormat(
+  SImage_t *tgt, int x_offset, int y_offset, const SImage_t *src)
+{
+  assert(src->format == tgt->format);
+
+  switch (tgt->format) {
+  case SFmt_Invalid:
+    return;
+  case SFmt_Gray:
+    stackGray(
+      tgt, tgt->data_gray,
+      src, src->data_gray,
+      x_offset, y_offset);
+    break;
+  case SFmt_RGB:
+    stackRGB(
+      tgt, tgt->data_rgb,
+      src, src->data_rgb,
+      x_offset, y_offset);
+    break;
+  case SFmt_SeparateRGB:
+    stackGray(
+      tgt, SImage_dataRed(tgt),
+      src, SImage_dataRed(src),
+      x_offset, y_offset);
+    stackGray(
+      tgt, SImage_dataGreen(tgt),
+      src, SImage_dataGreen(src),
+      x_offset, y_offset);
+    stackGray(
+      tgt, SImage_dataBlue(tgt),
+      src, SImage_dataBlue(src),
+      x_offset, y_offset);
+    break;
+  }
+}
+
+void SImage_stack(
+  SImage_t *tgt, int x_offset, int y_offset, const SImage_t *src)
+{
+  if (tgt->format == SFmt_Invalid || src->format == SFmt_Invalid) {
+    return;
+  }
+
+  if (src->format == tgt->format) {
+    stackSameFormat(tgt, x_offset, y_offset, src);
+  } else {
+    SImage_t *src2 = SImage_toFormat(src, tgt->format);
+    if (src2->format != SFmt_Invalid) {
+      stackSameFormat(tgt, x_offset, y_offset, src2);
+    }
+    SImage_free(src2);
+  }
+}

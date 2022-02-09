@@ -241,4 +241,26 @@ SVec2f_t *SImage_rowBlue(
   const SImage_t *image,
   unsigned        y);
 
+/** \brief Stack on image on another
+ *
+ * Stacking adds corresponding pixels from \p src image to \p tgt image.
+ * Pixels are added as vectors, which results in computing weighted-mean
+ * and increasing weight. Additionally, \p src image is translated by
+ * \p x_offset and \p y_offset. This function modifies pixels in \p tgt
+ * image.
+ *
+ * Images may have different formats. If so, the \p src image is internally
+ * converted to the format of \p tgt image, before stacking, while original
+ * \p src remains untouched.
+ *
+ * \param tgt Image on which pixels are stacked
+ * \param x_offset X-offset of \p src image, used while stacking
+ * \param y_offset Y-offset of \p src image, used while stacking
+ * \param src Soucre image */
+void SImage_stack(
+  SImage_t       *tgt,
+  int             x_offset,
+  int             y_offset,
+  const SImage_t *src);
+
 #endif /* __SPICA_IMAGE_H__ */
