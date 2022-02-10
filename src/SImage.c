@@ -237,6 +237,74 @@ SImage_t *SImage_toFormat(const SImage_t *image, SImageFormat_t format) {
   SImage_toFormat_at(dst, image, format);
   return dst;
 }
+
+/* ========================================================================= */
+/* Clear */
+
+void SImage_clear(SImage_t *image) {
+  if (image->format == SFmt_Invalid) return;
+
+  memset(image->data, 0, SImage_dataSize(image));
+}
+
+static void clearWithVec2f(SVec2f_t *data, SVec2f_t v, size_t size) {
+  for (size_t i = 0; i < size; i++) data[i] = v;
+}
+
+static void clearWithVec4f(SVec4f_t *data, SVec4f_t v, size_t size) {
+  for (size_t i = 0; i < size; i++) data[i] = v;
+}
+
+void SImage_clearBlack(SImage_t *image) {
+  switch (image->format) {
+  case SFmt_Invalid:
+    return;
+  case SFmt_Gray:
+    clearWithVec2f(
+      image->data_gray,
+      SVec2f(0.0f, 1.0f),
+      image->width * image->height);
+    break;
+  case SFmt_RGB:
+    clearWithVec4f(
+      image->data_rgb,
+      SVec4f(0.0f, 0.0f, 0.0f, 1.0f),
+      image->width * image->height);
+    break;
+  case SFmt_SeparateRGB:
+    clearWithVec2f(
+      image->data_red,
+      SVec2f(0.0f, 1.0f),
+      3 * image->width * image->height);
+    break;
+  }
+}
+
+void SImage_clearWhite(SImage_t *image) {
+  switch (image->format) {
+  case SFmt_Invalid:
+    return;
+  case SFmt_Gray:
+    clearWithVec2f(
+      image->data_gray,
+      SVec2f(1.0f, 1.0f),
+      image->width * image->height);
+    break;
+  case SFmt_RGB:
+    clearWithVec4f(
+      image->data_rgb,
+      SVec4f(1.0f, 1.0f, 1.0f, 1.0f),
+      image->width * image->height);
+    break;
+  case SFmt_SeparateRGB:
+    clearWithVec2f(
+      image->data_red,
+      SVec2f(1.0f, 1.0f),
+      3 * image->width * image->height);
+    break;
+  }
+}
+
 /* ========================================================================= */
 
 size_t SImage_dataSize(const SImage_t *image) {
@@ -916,5 +984,202 @@ void SImage_div(
       divSameFormat(tgt, x_offset, y_offset, &src2);
     }
     SImage_deinit(&src2);
+  }
+}
+
+/* ========================================================================= */
+/* SImage_addConst */
+
+static void addConstGray(SVec2f_t *data, size_t n, float v) {
+  for (size_t i = 0; i < n; i++)
+    data[i][0] += v * data[i][1];
+}
+
+static void addConstRGB(SVec4f_t *data, size_t n, float r, float g, float b) {
+  SVec4f_t v = { r, g, b, 0.0f };
+  for (size_t i = 0; i < n; i++)
+    data[i] += v * data[i][3];
+}
+
+void SImage_addConst(SImage_t *image, float v) {
+  switch (image->format) {
+  case SFmt_Invalid:
+    return;
+  case SFmt_Gray:
+    addConstGray(image->data_gray, image->width * image->height, v);
+    break;
+  case SFmt_RGB:
+    addConstRGB(image->data_rgb, image->width * image->height, v, v, v);
+    break;
+  case SFmt_SeparateRGB:
+    addConstGray(SImage_dataRed(image),   image->width * image->height, v);
+    addConstGray(SImage_dataGreen(image), image->width * image->height, v);
+    addConstGray(SImage_dataBlue(image),  image->width * image->height, v);
+    break;
+  }
+}
+
+void SImage_addConstRGB(SImage_t *image, float r, float g, float b) {
+  switch (image->format) {
+  case SFmt_Invalid:
+    return;
+  case SFmt_Gray:
+    addConstGray(
+      image->data_gray, image->width * image->height, (r + g + b) / 3.0f);
+    break;
+  case SFmt_RGB:
+    addConstRGB(image->data_rgb, image->width * image->height, r, g, b);
+    break;
+  case SFmt_SeparateRGB:
+    addConstGray(SImage_dataRed(image),   image->width * image->height, r);
+    addConstGray(SImage_dataGreen(image), image->width * image->height, g);
+    addConstGray(SImage_dataBlue(image),  image->width * image->height, b);
+    break;
+  }
+}
+
+void SImage_subConst(SImage_t *image, float v) {
+  SImage_addConst(image, -v);
+}
+
+void SImage_subConstRGB(SImage_t *image, float r, float g, float b) {
+  SImage_addConstRGB(image, -r, -g, -b);
+}
+
+/* ========================================================================= */
+/* SImage_mulConst */
+
+static void mulConstGray(SVec2f_t *data, size_t n, float v) {
+  for (size_t i = 0; i < n; i++)
+    data[i][0] *= v;
+}
+
+static void mulConstRGB(SVec4f_t *data, size_t n, float r, float g, float b) {
+  SVec4f_t v = { r, g, b, 1.0f };
+  for (size_t i = 0; i < n; i++)
+    data[i] *= v;
+}
+
+void SImage_mulConst(SImage_t *image, float v) {
+  switch (image->format) {
+  case SFmt_Invalid:
+    return;
+  case SFmt_Gray:
+    mulConstGray(image->data_gray, image->width * image->height, v);
+    break;
+  case SFmt_RGB:
+    mulConstRGB(image->data_rgb, image->width * image->height, v, v, v);
+    break;
+  case SFmt_SeparateRGB:
+    mulConstGray(SImage_dataRed(image),   image->width * image->height, v);
+    mulConstGray(SImage_dataGreen(image), image->width * image->height, v);
+    mulConstGray(SImage_dataBlue(image),  image->width * image->height, v);
+    break;
+  }
+}
+
+void SImage_mulConstRGB(SImage_t *image, float r, float g, float b) {
+  switch (image->format) {
+  case SFmt_Invalid:
+    return;
+  case SFmt_Gray:
+    mulConstGray(
+      image->data_gray, image->width * image->height, (r + g + b) / 3.0f);
+    break;
+  case SFmt_RGB:
+    mulConstRGB(image->data_rgb, image->width * image->height, r, g, b);
+    break;
+  case SFmt_SeparateRGB:
+    mulConstGray(SImage_dataRed(image),   image->width * image->height, r);
+    mulConstGray(SImage_dataGreen(image), image->width * image->height, g);
+    mulConstGray(SImage_dataBlue(image),  image->width * image->height, b);
+    break;
+  }
+}
+
+void SImage_divConst(SImage_t *image, float v) {
+  SImage_mulConst(image, 1.0f / v);
+}
+
+void SImage_divConstRGB(SImage_t *image, float r, float g, float b) {
+  SImage_mulConstRGB(image, 1.0f / r, 1.0f / g, 1.0f / b);
+}
+
+/* ========================================================================= */
+/* SImage_mulWeight */
+
+static void mulWeightGray(SVec2f_t *data, size_t n, float v) {
+  for (size_t i = 0; i < n; i++)
+    data[i] *= v;
+}
+
+static void mulWeightRGB(SVec4f_t *data, size_t n, float v) {
+  for (size_t i = 0; i < n; i++)
+    data[i] *= v;
+}
+
+void SImage_mulWeight(SImage_t *image, float v) {
+  switch (image->format) {
+  case SFmt_Invalid:
+    return;
+  case SFmt_Gray:
+    mulWeightGray(image->data_gray, image->width * image->height, v);
+    break;
+  case SFmt_RGB:
+    mulWeightRGB(image->data_rgb, image->width * image->height, v);
+    break;
+  case SFmt_SeparateRGB:
+    mulWeightGray(SImage_dataRed(image),   image->width * image->height, v);
+    mulWeightGray(SImage_dataGreen(image), image->width * image->height, v);
+    mulWeightGray(SImage_dataBlue(image),  image->width * image->height, v);
+    break;
+  }
+}
+
+void SImage_mulWeightRGB(SImage_t *image, float r, float g, float b) {
+  if (image->format != SFmt_SeparateRGB) return;
+
+  mulWeightGray(SImage_dataRed(image),   image->width * image->height, r);
+  mulWeightGray(SImage_dataGreen(image), image->width * image->height, g);
+  mulWeightGray(SImage_dataBlue(image),  image->width * image->height, b);
+}
+
+/* ========================================================================= */
+/* SImage_mulWeight */
+
+static void invertGray(SVec2f_t *data, size_t n) {
+  for (size_t i = 0; i < n; i++) {
+    SVec2f_t pix = data[i];
+    if (pix[0] == 0.0f) continue;
+    data[i][0] = pix[1] * pix[1] / pix[0];
+  }
+}
+
+static void invertRGB(SVec4f_t *data, size_t n) {
+  for (size_t i = 0; i < n; i++) {
+    SVec4f_t pix = data[i];
+    float w = pix[3];
+    if (w == 0.0f) continue;
+    pix = pix[3] * pix[3] / pix;
+    pix[3] = w;
+    data[i] = pix;
+  }
+}
+
+void SImage_invert(SImage_t *image) {
+  switch (image->format) {
+  case SFmt_Invalid:
+    return;
+  case SFmt_Gray:
+    invertGray(image->data_gray, image->width * image->height);
+    break;
+  case SFmt_RGB:
+    invertRGB(image->data_rgb, image->width * image->height);
+    break;
+  case SFmt_SeparateRGB:
+    invertGray(SImage_dataRed(image),   image->width * image->height);
+    invertGray(SImage_dataGreen(image), image->width * image->height);
+    invertGray(SImage_dataBlue(image),  image->width * image->height);
+    break;
   }
 }

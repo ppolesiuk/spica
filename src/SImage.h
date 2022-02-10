@@ -11,10 +11,13 @@
  * (SImage_t) are represented as arrays of pixels. Each pixel consists of its
  * value for each channel (gray or RGB) and weight. Weight is always the last
  * component of a vector that represents pixel data. The real value of a pixel
- * is a quotient of channel values and the weight. If weight is equal to 0,
- * other channels alos should be zero. When images are stacked, corresponding
- * pixels are added (as vectors), which results in computing weighted-mean
- * of their values.
+ * (called normalized value or normalized brightness) is a quotient of channel
+ * values and the weight. If weight is equal to 0, other channels alos should
+ * be zero. When images are stacked, corresponding pixels are added (as
+ * vectors), which results in computing weighted-mean of their values.
+ *
+ * The values of the pixels usually have values between zero (black) and
+ * weight (white), but it is possible to have values out of this range.
  */
 
 #ifndef __SPICA_IMAGE_H__
@@ -74,6 +77,9 @@ typedef struct SImage {
  * needed memory, the \p format argument is ignored and set to
  * \ref SFmt_Invalid.
  *
+ * Freshly initialized image contains uninitialized data. It can be
+ * initialized using \ref SImage_clear function.
+ *
  * \param image Pointer to already allocated SImage_t.
  * \param width  Width of an image (in pixels).
  * \param height Height of an image (in pixels).
@@ -102,6 +108,9 @@ void SImage_deinit(
  * When \p width or \p height are invalid, or system is unable to allocate
  * needed memory, the \p format argument is ignored and set to
  * \ref SFmt_Invalid.
+ *
+ * The new image contains uninitialized data. It can be initialized using
+ * \ref SImage_clear function.
  *
  * \param width  Width of an image (in pixels).
  * \param height Height of an image (in pixels).
@@ -151,6 +160,34 @@ void SImage_toFormat_at(
 SImage_t *SImage_toFormat(
   const SImage_t *image,
   SImageFormat_t  format);
+
+/** \brief Clear the image contents, i.e., sets weights of all pixels to zero
+ *
+ * \param image Image to be cleared
+ *
+ * \sa SImage_clearBlack, SImage_clearWhite */
+void SImage_clear(
+  SImage_t *image);
+
+/** \brief Clear the image with the black color.
+ *
+ * This functions sets all pixel values to zero, and all pixel weights to one.
+ *
+ * \param image Image to be cleared
+ *
+ * \sa SImage_clear, SImage_clearWhite */
+void SImage_clearBlack(
+  SImage_t *image);
+
+/** \brief Clear the image with the white color.
+ *
+ * This functions sets all pixel values and weights to one.
+ *
+ * \param image Image to be cleared
+ *
+ * \sa SImage_clear, SImage_clearBlack */
+void SImage_clearWhite(
+  SImage_t *image);
 
 /** \brief Get the size of memory occupied by the image data (in bytes)
  *
@@ -278,7 +315,7 @@ void SImage_stack(
  * \param y_offset Y-offset of a mask
  * \param mask Mask image
  *
- * \sa SImage_mul */
+ * \sa SImage_mul, SImage_mulWeight, SImage_mulWeightRGB */
 void SImage_mask(
   SImage_t       *image,
   int             x_offset,
@@ -302,7 +339,8 @@ void SImage_mask(
  * \param y_offset Y-offset of \p src image
  * \param src Soucre image
  *
- * \sa SImage_stack, SImage_sub, SImage_mul, SImage_div */
+ * \sa SImage_stack, SImage_sub, SImage_mul, SImage_div, SImage_addConst,
+ *   SImage_addConstRGB */
 void SImage_add(
   SImage_t       *tgt,
   int             x_offset,
@@ -324,7 +362,8 @@ void SImage_add(
  * \param y_offset Y-offset of \p src image
  * \param src Soucre image, to be subtracted from \p tgt image
  *
- * \sa SImage_add, SImage_mul, SImage_div */
+ * \sa SImage_add, SImage_mul, SImage_div, SImage_subConst,
+ * SImage_subConstRGB */
 void SImage_sub(
   SImage_t       *tgt,
   int             x_offset,
@@ -347,7 +386,8 @@ void SImage_sub(
  * \param y_offset Y-offset of \p src image
  * \param src Soucre image -- the another factor
  *
- * \sa SImage_mask, SImage_add, SImage_sub, SImage_div */
+ * \sa SImage_mask, SImage_add, SImage_sub, SImage_div, SImage_mulConst,
+ *   SImage_mulConstRGB, SImage_mulWeight, SImage_mulWeightRGB */
 void SImage_mul(
   SImage_t       *tgt,
   int             x_offset,
@@ -369,11 +409,167 @@ void SImage_mul(
  * \param y_offset Y-offset of \p src image
  * \param src Soucre image -- the divisor
  *
- * \sa SImage_add, SImage_sub, SImage_mul */
+ * \sa SImage_add, SImage_sub, SImage_mul, SImage_divConst,
+ *   SImage_divConstRGB, SImage_invert */
 void SImage_div(
   SImage_t       *tgt,
   int             x_offset,
   int             y_offset,
   const SImage_t *src);
+
+/** \brief Add constant value to an image
+ *
+ * This function arithemtically adds constant value to each pixel of an image.
+ * For each pixel, the value is normalized with respect to weight before
+ * addition. Weights are not changed by this function.
+ *
+ * \param image Image to be modified
+ * \param v Value added to each pixel
+ *
+ * \sa SImage_add, SImage_addConstRGB, SImage_subConst, SImage_mulConst,
+ *   SImage_divConst */
+void SImage_addConst(SImage_t *image, float v);
+
+/** \brief Add constant value to each RGB channel of an image
+ *
+ * This function arithmetically adds constant value to each channel of each
+ * pixel of an image (different channels may use different constant). For each
+ * pixel, the value is normalized with respect to weight before addition.
+ * Weights remain unchanged.
+ *
+ * \param image Image to be modified
+ * \param r Value added to the red channel
+ * \param g Value added to the green channel
+ * \param b Value added to the blue channel
+ *
+ * \sa SImage_add, SImage_addConst, SImage_subConstRGB, SImage_mulConstRGB,
+ *   SImage_divConstRGB */
+void SImage_addConstRGB(SImage_t *image, float r, float g, float b);
+
+/** \brief Subtract constant value from an image
+ *
+ * This function arithemtically subtracts constant value from each pixel of an
+ * image. For each pixel, the value is normalized with respect to weight
+ * before subtraction. Weights are not changed by this function.
+ *
+ * \param image Image to be modified
+ * \param v Value subtracted each pixel
+ *
+ * \sa SImage_sub, SImage_subConstRGB, SImage_addConst, SImage_mulConst,
+ *   SImage_divConst */
+void SImage_subConst(SImage_t *image, float v);
+
+/** \brief Subtract constant value from each of RGB channels of an image
+ *
+ * This function arithmetically subtracts constant value from each channel of
+ * each pixel of an image (different channels may use different constant). For
+ * each pixel, the value is normalized with respect to weight before subtaction.
+ * Weights remain unchanged.
+ *
+ * \param image Image to be modified
+ * \param r Value subtracted from the red channel
+ * \param g Value subtracted from the green channel
+ * \param b Value subtracted from the blue channel
+ *
+ * \sa SImage_sub, SImage_subConst, SImage_addConstRGB, SImage_mulConstRGB,
+ *   SImage_divConstRGB */
+void SImage_subConstRGB(SImage_t *image, float r, float g, float b);
+
+/** \brief Multiply image by a constant value
+ *
+ * This function multiplies each pixel of an image by a constant value.
+ * Weights are not changed by this function.
+ *
+ * \param image Image to be modified
+ * \param v Value multiplied to each pixel
+ *
+ * \sa SImage_mul, SImage_mulConstRGB, SImage_mulWeight, SImage_addConst,
+ *   SImage_subConst, SImage_divConst */
+void SImage_mulConst(SImage_t *image, float v);
+
+/** \brief Multiply each of RGB channels of an image by a constant value
+ *
+ * This function multiplies each of RGB channels of each pixels of an image by
+ * a constant value (different channels may use different constant). Weights
+ * remain unchanged.
+ *
+ * \param image Image to be modified
+ * \param r Value multiplied to the red channel
+ * \param g Value multiplied to the green channel
+ * \param b Value multiplied to the blue channel
+ *
+ * \sa SImage_mul, SImage_mulConst, SImage_mulWeightRGB, SImage_addConstRGB,
+ *   SImage_subConstRGB, SImage_divConstRGB */
+void SImage_mulConstRGB(SImage_t *image, float r, float g, float b);
+
+/** \brief Divide image by a constant value
+ *
+ * This function divides each pixel of an image by a constant value.
+ * Weights are not changed by this function.
+ *
+ * \param image Image to be modified
+ * \param v Divisor applied to each pixel
+ *
+ * \sa SImage_div, SImage_divConstRGB, SImage_addConst, SImage_subConst,
+ *   SImage_mulConst */
+void SImage_divConst(SImage_t *image, float v);
+
+/** \brief Divide each of RGB channels of an image by a constant value
+ *
+ * This function divides each of RGB channels of each pixels of an image by
+ * a constant value (different channels may use different constant). Weights
+ * remain unchanged.
+ *
+ * \param image Image to be modified
+ * \param r Divisor applied to the red channel
+ * \param g Divisor applied to the green channel
+ * \param b Divisor applied to the blue channel
+ *
+ * \sa SImage_div, SImage_divConst, SImage_addConstRGB, SImage_subConstRGB,
+ *   SImage_mulConstRGB */
+void SImage_divConstRGB(SImage_t *image, float r, float g, float b);
+
+/** \brief Multiply image weight by a constant value
+ *
+ * This function multiplies each vector that represents single pixel of an
+ * image by a constant value. This operation results in multiplying pixel
+ * weights by a constant, without changing their colors.
+ *
+ * \param image Image to be modified
+ * \param v Value multiplied to each pixel
+ *
+ * \sa SImage_mul, SImage_mulConst, SImage_mulConstRGB, SImage_mulWeightRGB */
+void SImage_mulWeight(SImage_t *image, float v);
+
+/** \brief Multiply weights of each RGB channel of an image by a constant value
+ *
+ * This function multiplies each vector that represents single pixel of each
+ * channel of \ref SFmt_SeparateRGB image by a constant value (different
+ * channels may use different constant). This operation results in multiplying
+ * pixel weights by a constant, without changing their colors. This function
+ * makes sense only for \ref SFmt_SeparateRGB images.
+ *
+ * \param image Image to be modified
+ * \param r Value multiplied to each pixel of red channel
+ * \param g Value multiplied to each pixel of green channel
+ * \param b Value multiplied to each pixel of blue channel
+ *
+ * \sa SImage_mul, SImage_mulConst, SImage_mulConstRGB, SImage_mulWeightRGB */
+void SImage_mulWeightRGB(SImage_t *image, float r, float g, float b);
+
+/** \brief Invert (multiplicatively) each pixel of an image
+ *
+ * This function multiplicatively inverts each of image pixel: if a pixel has
+ * normalized brightness $x$, then inverted pixel has normalized brightness
+ * $1/x$. This is not the same as image negative. This function does not modify
+ * pixel weights.
+ *
+ * Note that this operation usually produce an image, where normalized pixel
+ * values are greated than one.
+ *
+ * \param image Image to be inverted
+ *
+ * \sa SImage_div */
+void SImage_invert(SImage_t *image);
 
 #endif /* __SPICA_IMAGE_H__ */
