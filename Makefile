@@ -15,7 +15,6 @@ SRCS = \
 PUBLIC_HDRS = \
 	SCommon.h \
 	SImage.h \
-	SImageIO.h \
 	SVec.h
 
 OBJS=$(patsubst %, $(BLDDIR)/%.o, $(basename $(SRCS)))
@@ -52,8 +51,8 @@ include $(wildcard $(patsubst %, $(BLDDIR)/%.d, $(basename $(SRCS))))
 
 clean:
 	rm -f $(BLDDIR)/*.o $(BLDDIR)/*.d
-	rmdir $(BLDDIR)
+	rm -fd $(BLDDIR)
 	rm -f $(INCLUDEDIR)/*.h
-	rmdir $(INCLUDEDIR)
+	rm -fd $(INCLUDEDIR)
 	rm -f $(LIBDIR)/$(TARGET)
-	rmdir $(LIBDIR)
+	rm -fd $(LIBDIR)

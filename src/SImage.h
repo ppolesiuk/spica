@@ -12,7 +12,7 @@
  * value for each channel (gray or RGB) and weight. Weight is always the last
  * component of a vector that represents pixel data. The real value of a pixel
  * (called normalized value or normalized brightness) is a quotient of channel
- * values and the weight. If weight is equal to 0, other channels alos should
+ * values and the weight. If weight is equal to 0, other channels also should
  * be zero. When images are stacked, corresponding pixels are added (as
  * vectors), which results in computing weighted-mean of their values.
  *
@@ -23,6 +23,7 @@
 #ifndef __SPICA_IMAGE_H__
 #define __SPICA_IMAGE_H__
 
+#include "SCommon.h"
 #include "SVec.h"
 
 #include <stddef.h>
@@ -32,7 +33,7 @@ typedef enum SImageFormat {
   /** Invalid SImage_t -- it contains no data */
   SFmt_Invalid = 0,
 
-  /** Gray-scale SImage_t. Each pixel is represented as a magnitude-wieght
+  /** Gray-scale SImage_t. Each pixel is represented as a magnitude-weight
    * \ref SVec2f_t vector */
   SFmt_Gray,
 
@@ -64,10 +65,26 @@ typedef struct SImage {
     /** \brief Image data (for \ref SFmt_SeparateRGB images)
      *
      * Data is organized as three consecutive arrays (red, green, blue)
-     * that occupy a continous block in the memory. */
+     * that occupy a continuous block in the memory. */
     SVec2f_t *data_red;
   };
 } SImage_t;
+
+/** \brief On-disk pixel format */
+typedef enum SPixFormat {
+  /** 8-bit gray scale */
+  SPF_Gray8 = 0,
+  /** 16-bit gray scale */
+  SPF_Gray16,
+  /** 8-bit RGB */
+  SPF_RGB8,
+  /** 16-bit RGB */
+  SPF_RGB16,
+} SPixFormat_t;
+
+/* ========================================================================= */
+/** @name Constructors and destructors
+ * @{ */
 
 /** \brief Initialize already allocated SImage_t
  *
@@ -133,7 +150,12 @@ SImage_t *SImage_alloc(
 void SImage_free(
   SImage_t *image);
 
-/** \brief Convert image format and strore result in already allocated SImage_t
+/** @} */
+/* ========================================================================= */
+/** @name Miscellaneous
+ * @{ */
+
+/** \brief Convert image format and store result in already allocated SImage_t
  *
  * \param dst Pointer to the destination SImage_t structure. The function will
  *   initialize this memory using \ref SImage_init function. If \p dst already
@@ -188,6 +210,11 @@ void SImage_clearBlack(
  * \sa SImage_clear, SImage_clearBlack */
 void SImage_clearWhite(
   SImage_t *image);
+
+/** @} */
+/* ========================================================================= */
+/** @name Data access
+ * @{ */
 
 /** \brief Get the size of memory occupied by the image data (in bytes)
  *
@@ -278,6 +305,11 @@ SVec2f_t *SImage_rowBlue(
   const SImage_t *image,
   unsigned        y);
 
+/** @} */
+/* ========================================================================= */
+/** @name Arithmetic operations
+ * @{ */
+
 /** \brief Stack on image on another
  *
  * Stacking adds corresponding pixels from \p src image to \p tgt image.
@@ -293,7 +325,7 @@ SVec2f_t *SImage_rowBlue(
  * \param tgt Image on which pixels are stacked
  * \param x_offset X-offset of \p src image, used while stacking
  * \param y_offset Y-offset of \p src image, used while stacking
- * \param src Soucre image
+ * \param src Source image
  *
  * \sa SImage_mask, SImage_add */
 void SImage_stack(
@@ -324,7 +356,7 @@ void SImage_mask(
 
 /** \brief Add one image to another
  *
- * This function arithemtically adds pixel values from \p src image to
+ * This function arithmetically adds pixel values from \p src image to
  * corresponding pixels of \p tgt image. In contrast to \ref SImage_stack
  * values normalized with respect to pixel weight are added, so this function
  * implements arithmetical addition instead of weighted mean. Weights in
@@ -337,7 +369,7 @@ void SImage_mask(
  * \param tgt Target image of an addition
  * \param x_offset X-offset of \p src image
  * \param y_offset Y-offset of \p src image
- * \param src Soucre image
+ * \param src Source image
  *
  * \sa SImage_stack, SImage_sub, SImage_mul, SImage_div, SImage_addConst,
  *   SImage_addConstRGB */
@@ -349,7 +381,7 @@ void SImage_add(
 
 /** \brief Subtract one image to another
  *
- * This function arithemtically subtract pixel of \p src image from
+ * This function arithmetically subtract pixel of \p src image from
  * corresponding pixels of \p tgt image. This function operates on values
  * normalized with respect to pixel weight. Weights remain unchanged.
  *
@@ -360,7 +392,7 @@ void SImage_add(
  * \param tgt Target image of a subtraction
  * \param x_offset X-offset of \p src image
  * \param y_offset Y-offset of \p src image
- * \param src Soucre image, to be subtracted from \p tgt image
+ * \param src Source image, to be subtracted from \p tgt image
  *
  * \sa SImage_add, SImage_mul, SImage_div, SImage_subConst,
  * SImage_subConstRGB */
@@ -372,7 +404,7 @@ void SImage_sub(
 
 /** \brief Multiply one image by another
  *
- * This function arithemtically multiply pixel of \p dst image by
+ * This function arithmetically multiply pixel of \p dst image by
  * corresponding pixels of \p src image. This function operates on values
  * normalized with respect to pixel weight. In contrast to \ref SImage_mask
  * weights remain unchanged.
@@ -384,7 +416,7 @@ void SImage_sub(
  * \param tgt Target image of a multiplication and one of factor
  * \param x_offset X-offset of \p src image
  * \param y_offset Y-offset of \p src image
- * \param src Soucre image -- the another factor
+ * \param src Source image -- the another factor
  *
  * \sa SImage_mask, SImage_add, SImage_sub, SImage_div, SImage_mulConst,
  *   SImage_mulConstRGB, SImage_mulWeight, SImage_mulWeightRGB */
@@ -396,7 +428,7 @@ void SImage_mul(
 
 /** \brief Divide one image by another
  *
- * This function arithemtically divide pixel of \p dst image by
+ * This function arithmetically divide pixel of \p dst image by
  * corresponding pixels of \p src image. This function operates on values
  * normalized with respect to pixel weight. Weights remain unchanged.
  *
@@ -407,7 +439,7 @@ void SImage_mul(
  * \param tgt Target image, and the divident
  * \param x_offset X-offset of \p src image
  * \param y_offset Y-offset of \p src image
- * \param src Soucre image -- the divisor
+ * \param src Source image -- the divisor
  *
  * \sa SImage_add, SImage_sub, SImage_mul, SImage_divConst,
  *   SImage_divConstRGB, SImage_invert */
@@ -419,7 +451,7 @@ void SImage_div(
 
 /** \brief Add constant value to an image
  *
- * This function arithemtically adds constant value to each pixel of an image.
+ * This function arithmetically adds constant value to each pixel of an image.
  * For each pixel, the value is normalized with respect to weight before
  * addition. Weights are not changed by this function.
  *
@@ -448,7 +480,7 @@ void SImage_addConstRGB(SImage_t *image, float r, float g, float b);
 
 /** \brief Subtract constant value from an image
  *
- * This function arithemtically subtracts constant value from each pixel of an
+ * This function arithmetically subtracts constant value from each pixel of an
  * image. For each pixel, the value is normalized with respect to weight
  * before subtraction. Weights are not changed by this function.
  *
@@ -463,8 +495,8 @@ void SImage_subConst(SImage_t *image, float v);
  *
  * This function arithmetically subtracts constant value from each channel of
  * each pixel of an image (different channels may use different constant). For
- * each pixel, the value is normalized with respect to weight before subtaction.
- * Weights remain unchanged.
+ * each pixel, the value is normalized with respect to weight before
+ * subtraction. Weights remain unchanged.
  *
  * \param image Image to be modified
  * \param r Value subtracted from the red channel
@@ -560,16 +592,62 @@ void SImage_mulWeightRGB(SImage_t *image, float r, float g, float b);
 /** \brief Invert (multiplicatively) each pixel of an image
  *
  * This function multiplicatively inverts each of image pixel: if a pixel has
- * normalized brightness $x$, then inverted pixel has normalized brightness
- * $1/x$. This is not the same as image negative. This function does not modify
- * pixel weights.
+ * normalized brightness \f$x\f$, then inverted pixel has normalized brightness
+ * \f$1/x\f$. This is not the same as image negative. This function does not
+ * modify pixel weights.
  *
  * Note that this operation usually produce an image, where normalized pixel
- * values are greated than one.
+ * values are greater than one.
  *
  * \param image Image to be inverted
  *
  * \sa SImage_div */
 void SImage_invert(SImage_t *image);
+
+/** @} */
+/* ========================================================================= */
+/** @name IO operations
+ * @{ */
+
+/** \brief load PNG image into allocated \ref SImage_t
+ *
+ * \param image Pointer to the SImage_t structure. The \ref SImage_loadPNG_at
+ *   will initialize this memory using \ref SImage_init function. If \p image
+ *   already contains an image, the \ref SImage_deinit should be called first.
+ * \param fname File name of the PNG image
+ *
+ * \return \ref SPICA_OK on success or \ref SPICA_ERROR on fail. On error the
+ *   \p image is initialized as \ref SFmt_Invalid image.
+ *
+ * \sa SImage_loadPNG */
+int SImage_loadPNG_at(
+  SImage_t   *image,
+  const char *fname);
+
+/** \brief load PNG image from file.
+ *
+ * \param fname File name of the PNG image
+ *
+ * \return newly allocated \ref SImage_t. The image should be freed using
+ *   \ref SImage_free function.
+ *
+ * \sa SImage_loadPNG_at */
+SImage_t *SImage_loadPNG(
+  const char *fname);
+
+/** \brief save PNG image into a file.
+ *
+ * \param image Image to be saved
+ * \param format Requested on-disc format of an image
+ * \param fname Name of the output file
+ *
+ * \return \ref SPICA_OK on success or \ref SPICA_ERROR on fail. */
+int SImage_savePNG(
+  const SImage_t *image,
+  SPixFormat_t    format,
+  const char     *fname);
+
+/** @} */
+/* ========================================================================= */
 
 #endif /* __SPICA_IMAGE_H__ */

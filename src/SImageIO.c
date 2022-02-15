@@ -4,7 +4,7 @@
 
 /* Author: Piotr Polesiuk, 2022 */
 
-#include "SImageIO.h"
+#include "SImage.h"
 
 #include <assert.h>
 #include <stdint.h>
