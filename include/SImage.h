@@ -117,8 +117,7 @@ void SImage_init(
  * \param image Pointer to SImage_t to be deinitialized
  *
  * \sa SImage_free */
-void SImage_deinit(
-  SImage_t *image);
+void SImage_deinit(SImage_t *image);
 
 /** \brief Allocate and initialize new SImage_t
  *
@@ -147,8 +146,28 @@ SImage_t *SImage_alloc(
  * \param image Pointer to the image. It may be NULL.
  *
  * \sa SImage_deinit */
-void SImage_free(
-  SImage_t *image);
+void SImage_free(SImage_t *image);
+
+/** \brief Create copy of an image, and store it in already allocated SImage_t
+ *
+ * \param dst Pointer to the destination SImage_t structure. The function will
+ *   initialize this memory using \ref SImage_init function. If \p dst already
+ *   contains a valid image, the \ref SImage_deinit should be called first.
+ * \param image Source image
+ *
+ * \sa SImage_clone */
+void SImage_clone_at(SImage_t *dst, const SImage_t *image);
+
+/** \brief Create copy of an image
+ *
+ * \param image Source image
+ *
+ * \return pointer to the newly allocated image that contains the same data
+ *   as \p image. The new image should be freed using \ref SImage_free
+ *   function.
+ *
+ * \sa SImage_clone_at */
+SImage_t *SImage_clone(const SImage_t *image);
 
 /** @} */
 /* ========================================================================= */
@@ -179,17 +198,14 @@ void SImage_toFormat_at(
  *   function.
  *
  * \sa SImage_toFormat_at */
-SImage_t *SImage_toFormat(
-  const SImage_t *image,
-  SImageFormat_t  format);
+SImage_t *SImage_toFormat(const SImage_t *image, SImageFormat_t format);
 
 /** \brief Clear the image contents, i.e., sets weights of all pixels to zero
  *
  * \param image Image to be cleared
  *
  * \sa SImage_clearBlack, SImage_clearWhite */
-void SImage_clear(
-  SImage_t *image);
+void SImage_clear(SImage_t *image);
 
 /** \brief Clear the image with the black color.
  *
@@ -198,8 +214,7 @@ void SImage_clear(
  * \param image Image to be cleared
  *
  * \sa SImage_clear, SImage_clearWhite */
-void SImage_clearBlack(
-  SImage_t *image);
+void SImage_clearBlack(SImage_t *image);
 
 /** \brief Clear the image with the white color.
  *
@@ -208,8 +223,7 @@ void SImage_clearBlack(
  * \param image Image to be cleared
  *
  * \sa SImage_clear, SImage_clearBlack */
-void SImage_clearWhite(
-  SImage_t *image);
+void SImage_clearWhite(SImage_t *image);
 
 /** @} */
 /* ========================================================================= */
@@ -219,8 +233,7 @@ void SImage_clearWhite(
 /** \brief Get the size of memory occupied by the image data (in bytes)
  *
  * \return The size of the array used to store image data (in bytes) */
-size_t SImage_dataSize(
-  const SImage_t *image);
+size_t SImage_dataSize(const SImage_t *image);
 
 /** \brief Pointer to data of the red channel
  *
@@ -229,8 +242,7 @@ size_t SImage_dataSize(
  *  \ref SFmt_RGB returns NULL
  *
  * \sa SImage_rowRed, SImage_dataGreen, SImage_dataBlue */
-SVec2f_t *SImage_dataRed(
-  const SImage_t *image);
+SVec2f_t *SImage_dataRed(const SImage_t *image);
 
 /** \brief Pointer to data of the green channel
  *
@@ -239,8 +251,7 @@ SVec2f_t *SImage_dataRed(
  *  \ref SFmt_RGB returns NULL
  *
  * \sa SImage_rowGreen, SImage_dataRed, SImage_dataBlue */
-SVec2f_t *SImage_dataGreen(
-  const SImage_t *image);
+SVec2f_t *SImage_dataGreen(const SImage_t *image);
 
 /** \brief Pointer to data of the blue channel
  *
@@ -249,8 +260,7 @@ SVec2f_t *SImage_dataGreen(
  *  \ref SFmt_RGB returns NULL
  *
  * \sa SImage_rowBlue, SImage_dataRed, SImage_dataGreen */
-SVec2f_t *SImage_dataBlue(
-  const SImage_t *image);
+SVec2f_t *SImage_dataBlue(const SImage_t *image);
 
 /** \brief Pointer to given image row
  *
@@ -259,9 +269,7 @@ SVec2f_t *SImage_dataBlue(
  *
  * \return Pointer to image row data. For \ref SFmt_Invalid or
  *   \ref SFmt_SeparateRGB images returns NULL. */
-void *SImage_row(
-  const SImage_t *image,
-  unsigned        y);
+void *SImage_row(const SImage_t *image, unsigned y);
 
 /** \brief Pointer to given image row for the red channel
  *
@@ -273,9 +281,7 @@ void *SImage_row(
  *  returns NULL.
  *
  * \sa SImage_dataRed, SImage_rowGreen, SImage_rowBlue */
-SVec2f_t *SImage_rowRed(
-  const SImage_t *image,
-  unsigned        y);
+SVec2f_t *SImage_rowRed(const SImage_t *image, unsigned y);
 
 /** \brief Pointer to given image row for the green channel
  *
@@ -287,9 +293,7 @@ SVec2f_t *SImage_rowRed(
  *  returns NULL.
  *
  * \sa SImage_dataGreen, SImage_row_Red, SImage_rowBlue */
-SVec2f_t *SImage_rowGreen(
-  const SImage_t *image,
-  unsigned        y);
+SVec2f_t *SImage_rowGreen(const SImage_t *image, unsigned y);
 
 /** \brief Pointer to given image row for the blue channel
  *
@@ -301,9 +305,7 @@ SVec2f_t *SImage_rowGreen(
  *  returns NULL.
  *
  * \sa SImage_dataBlue, SImage_rowRed, SImage_rowGreen */
-SVec2f_t *SImage_rowBlue(
-  const SImage_t *image,
-  unsigned        y);
+SVec2f_t *SImage_rowBlue(const SImage_t *image, unsigned y);
 
 /** @} */
 /* ========================================================================= */
@@ -620,9 +622,7 @@ void SImage_invert(SImage_t *image);
  *   \p image is initialized as \ref SFmt_Invalid image.
  *
  * \sa SImage_loadPNG */
-int SImage_loadPNG_at(
-  SImage_t   *image,
-  const char *fname);
+int SImage_loadPNG_at(SImage_t *image, const char *fname);
 
 /** \brief load PNG image from file.
  *
@@ -632,8 +632,7 @@ int SImage_loadPNG_at(
  *   \ref SImage_free function.
  *
  * \sa SImage_loadPNG_at */
-SImage_t *SImage_loadPNG(
-  const char *fname);
+SImage_t *SImage_loadPNG(const char *fname);
 
 /** \brief save PNG image into a file.
  *
