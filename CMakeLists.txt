@@ -5,12 +5,13 @@ project(spica
 	DESCRIPTION "Astrophotography image processing library")
 include(GNUInstallDirs)
 
-set(EXTRA_C_FLAGS "-Wall -pedantic -std=c11")
+set(EXTRA_C_FLAGS "-Wall -pedantic -std=c11 -O2")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_C_FLAGS}")
 
 file(GLOB SOURCE_FILES
-	src/*.c)
+	src/*.c
+	src/SImage/*.c)
 file(GLOB INCLUDE_FILES
 	include/*.h)
 
