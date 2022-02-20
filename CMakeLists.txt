@@ -17,7 +17,7 @@ file(GLOB INCLUDE_FILES
 
 add_library(spica STATIC ${SOURCE_FILES})
 
-target_include_directories(spica PRIVATE include)
+target_include_directories(spica PRIVATE include src)
 
 install(FILES ${INCLUDE_FILES} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/spica)
 install(TARGETS spica

@@ -646,6 +646,37 @@ int SImage_savePNG(
   SPixFormat_t    format,
   const char     *fname);
 
+/** \brief load [SIWW](extraDoc/siww.md) image int allocated \ref SImage_t
+ *
+ * \param image Pointer to the SImage_t structure. The \ref SImage_loadSIWW_at
+ *   will initialize this memory using \ref SImage_init function. If \p image
+ *   already contains an image, the \ref SImage_deinit should be called first.
+ * \param fname File name of the [SIWW](extraDoc/siww.md) image
+ *
+ * \return \ref SPICA_OK on success or \ref SPICA_ERROR on fail. On error the
+ *   \p image is initialized as \ref SFmt_Invalid image.
+ *
+ * \sa SImage_loadSIWW */
+int SImage_loadSIWW_at(SImage_t *image, const char *fname);
+
+/** \brief load [SIWW](extraDoc/siww.md) image from file.
+ *
+ * \param fname File name of the [SIWW](extraDoc/siww.md) image
+ *
+ * \return newly allocated \ref SImage_t. The image should be freed using
+ *   \ref SImage_free function.
+ *
+ * \sa SImage_loadSIWW_at */
+SImage_t *SImage_loadSIWW(const char *fname);
+
+/** \brief save image into [SIWW](extraDoc/siww.md) file.
+ *
+ * \param image Image to be saved
+ * \param fname Name of the output file
+ *
+ * \return \ref SPICA_OK on success or \ref SPICA_ERROR on fail. */
+int SImage_saveSIWW(const SImage_t *image, const char *fname);
+
 /** @} */
 /* ========================================================================= */
 
