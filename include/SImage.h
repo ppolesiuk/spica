@@ -171,7 +171,7 @@ SImage_t *SImage_clone(const SImage_t *image);
 
 /** @} */
 /* ========================================================================= */
-/** @name Miscellaneous
+/** @name Image transformations
  * @{ */
 
 /** \brief Convert image format and store result in already allocated SImage_t
@@ -224,6 +224,41 @@ void SImage_clearBlack(SImage_t *image);
  *
  * \sa SImage_clear, SImage_clearBlack */
 void SImage_clearWhite(SImage_t *image);
+
+/** \brief Scale-down image by aa integer factor and store in already allocated
+ *    SImage_t
+ *
+ * The image is divided to squares of size \p factor (and possibly smaller
+ * squares on right and bottom edge). Pixels in each of such squares are
+ * stacked together into single pixel of \p dst image. Note that this
+ * operation increases weights of pixels square of \p factor times (except
+ * for pixels on left and bottom edge).
+ *
+ * \param dst Pointer to the destination SImage_t structure. The function will
+ *   initialize this memory using \ref SImage_init function. If \p dst already
+ *   contains a valid image, the \ref SImage_deinit should be called first.
+ * \param image Image to be scaled-down
+ * \param factor Integer factor used to scale the image. It should be greater
+ *   than 0.
+ *
+ * \sa SImage_scaleDown */
+void SImage_scaleDown_at(
+  SImage_t       *dst,
+  const SImage_t *image,
+  unsigned        factor);
+
+/** \brief Scale-down image by an integer factor.
+ *
+ * \param image Image to be scaled-down
+ * \param factor Integer factor used to scale the image. It should be greater
+ *   than 0.
+ *
+ * \return pointer to the newly allocated image that contains the result of
+ *   the scaling operation. See \ref SImage_scaleDown_at for more detailed
+ *   description of the operation itself.
+ *
+ * \sa SImage_scaleDown_at */
+SImage_t *SImage_scaleDown(const SImage_t *image, unsigned factor);
 
 /** @} */
 /* ========================================================================= */
