@@ -11,7 +11,8 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EXTRA_C_FLAGS}")
 
 file(GLOB SOURCE_FILES
 	src/*.c
-	src/SImage/*.c)
+	src/SImage/*.c
+	src/SStar/*.c)
 file(GLOB INCLUDE_FILES
 	include/*.h)
 
