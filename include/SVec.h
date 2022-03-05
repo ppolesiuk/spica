@@ -30,6 +30,20 @@ static inline float SVec2f_lengthSq(SVec2f_t v) __attribute__((unused));
 /** \brief Square of vector length */
 static inline float SVec4f_lengthSq(SVec4f_t v) __attribute__((unused));
 
+/** \brief Conjugate complex number */
+static inline SVec2f_t SVec2f_complexConj(SVec2f_t a) __attribute__((unused));
+
+/** \brief Inverse of a complex number */
+static inline SVec2f_t SVec2f_complexInv(SVec2f_t a) __attribute__((unused));
+
+/** \brief Multiply two complex numbers */
+static inline SVec2f_t SVec2f_complexMul(SVec2f_t a, SVec2f_t b)
+  __attribute__((unused));
+
+/** \brief Divide two complex numbers */
+static inline SVec2f_t SVec2f_complexDiv(SVec2f_t a, SVec2f_t b)
+  __attribute__((unused));
+
 /* ========================================================================= */
 
 static inline SVec2f_t SVec2f(float x, float y) {
@@ -48,6 +62,24 @@ static inline float SVec2f_lengthSq(SVec2f_t v) {
 
 static inline float SVec4f_lengthSq(SVec4f_t v) {
   return v[0]*v[0] + v[1]*v[1] + v[2]*v[2] + v[3]*v[3];
+}
+
+static inline SVec2f_t SVec2f_complexConj(SVec2f_t a) {
+  SVec2f_t result = { a[0], -a[1] };
+  return result;
+}
+
+static inline SVec2f_t SVec2f_complexInv(SVec2f_t a) {
+  return SVec2f_complexConj(a) / SVec2f_lengthSq(a);
+}
+
+static inline SVec2f_t SVec2f_complexMul(SVec2f_t a, SVec2f_t b) {
+  SVec2f_t c = { -b[1], b[0] };
+  return a[0] * b + a[1] * c;
+}
+
+static inline SVec2f_t SVec2f_complexDiv(SVec2f_t a, SVec2f_t b) {
+  return SVec2f_complexMul(a, SVec2f_complexConj(b)) / SVec2f_lengthSq(b);
 }
 
 #endif /* __SPICA_VEC_H__ */
