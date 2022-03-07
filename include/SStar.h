@@ -104,7 +104,7 @@ void SStarSet_free(SStarSet_t *sset);
  * \param dst Pointer to the destination SStarSet_t structure. The function
  *   will initialize this memory, so it can be later deinitialized using
  *   \ref SStarSet_deinit function. If \p dst already
- *   contains a valid image, the \ref SStarSet_deinit should be called first.
+ *   contains a valid set, the \ref SStarSet_deinit should be called first.
  * \param sset Source set of stars.
  *
  * \sa SStarSet_clone */
