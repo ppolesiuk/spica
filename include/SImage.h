@@ -23,8 +23,10 @@
 #ifndef __SPICA_IMAGE_H__
 #define __SPICA_IMAGE_H__
 
+#include "SBoundingBox.h"
 #include "SCommon.h"
 #include "SVec.h"
+#include "STransform.h"
 
 #include <stddef.h>
 
@@ -342,12 +344,169 @@ SVec2f_t *SImage_rowGreen(const SImage_t *image, unsigned y);
  * \sa SImage_dataBlue, SImage_rowRed, SImage_rowGreen */
 SVec2f_t *SImage_rowBlue(const SImage_t *image, unsigned y);
 
+/** \brief Get gray-scale value of a pixel
+ *
+ * If coordinates points outside of the image, the empyt pixel (with value and
+ * weight equal to 0) is returned. If the image is not in \ref SFmt_Gray format,
+ * the value is converted to gray-scale.
+ *
+ * \param image Image
+ * \param x     X-coordinate of a pixel
+ * \param y     Y-coordinate of a pixel
+ *
+ * \return Gray-scale value of a given pixel.
+ *
+ * \sa SImage_pixelRGB, SImage_pixelRed, SImage_pixelGreen, SImage_pixelBlue,
+ *   SImage_subpixelGray */
+SVec2f_t SImage_pixelGray(const SImage_t *image, int x, int y);
+
+/** \brief Get RGB value of a pixel
+ *
+ * If coordinates points outside of the image, the empyt pixel (with value and
+ * weight equal to 0) is returned. If the image is not in \ref SFmt_RGB format,
+ * the value is converted to RGB.
+ *
+ * \param image Image
+ * \param x     X-coordinate of a pixel
+ * \param y     Y-coordinate of a pixel
+ *
+ * \return RGB value of a given pixel.
+ *
+ * \sa SImage_pixelGray, SImage_pixelRed, SImage_pixelGreen, SImage_pixelBlue,
+ *   SImage_subpixelRGB */
+SVec4f_t SImage_pixelRGB(const SImage_t *image, int x, int y);
+
+/** \brief Get red channel value of a pixel
+ *
+ * If coordinates points outside of the image, the empyt pixel (with value and
+ * weight equal to 0) is returned.
+ *
+ * \param image Image
+ * \param x     X-coordinate of a pixel
+ * \param y     Y-coordinate of a pixel
+ *
+ * \return Red channel value of a given pixel.
+ *
+ * \sa SImage_pixelGray, SImage_pixelRGB, SImage_pixelGreen, SImage_pixelBlue,
+ *   SImage_subpixelRed */
+SVec2f_t SImage_pixelRed(const SImage_t *image, int x, int y);
+
+/** \brief Get green channel value of a pixel
+ *
+ * If coordinates points outside of the image, the empyt pixel (with value and
+ * weight equal to 0) is returned.
+ *
+ * \param image Image
+ * \param x     X-coordinate of a pixel
+ * \param y     Y-coordinate of a pixel
+ *
+ * \return Green channel value of a given pixel.
+ *
+ * \sa SImage_pixelGray, SImage_pixelRGB, SImage_pixelRed, SImage_pixelBlue,
+ *   SImage_subpixelGreen */
+SVec2f_t SImage_pixelGreen(const SImage_t *image, int x, int y);
+
+/** \brief Get blue channel value of a pixel
+ *
+ * If coordinates points outside of the image, the empyt pixel (with value and
+ * weight equal to 0) is returned.
+ *
+ * \param image Image
+ * \param x     X-coordinate of a pixel
+ * \param y     Y-coordinate of a pixel
+ *
+ * \return Blue channel value of a given pixel.
+ *
+ * \sa SImage_pixelGray, SImage_pixelRGB, SImage_pixelRed, SImage_pixelBlue,
+ *   SImage_subpixelBlue */
+SVec2f_t SImage_pixelBlue(const SImage_t *image, int x, int y);
+
+/** \brief Get gray-scale value of a pixel with sub-pixel precision.
+ *
+ * The value is interpolated from four nearby pixels. If \p pos points
+ * outside of the image, the function returns the empty pixel (with value and
+ * weight equal to 0). If the image is not in \ref SFmt_Gray format, the value
+ * is converted to gray-scale.
+ *
+ * \param image Image
+ * \param pos   Position on an image. May be outside of the image.
+ *
+ * \returns Pixel value on given position interpolated from nearby pixels.
+ *
+ * \sa SImage_subpixelRGB, SImage_subpixelRed, SImage_subpixelGreen,
+ *   SImage_subpixelBlue, SImage_pixelGray */
+SVec2f_t SImage_subpixelGray(const SImage_t *image, SVec2f_t pos);
+
+/** \brief Get RGB value of a pixel with sub-pixel precision.
+ *
+ * The value is interpolated from four nearby pixels. If \p pos points
+ * outside of the image, the function returns the empty pixel (with value and
+ * weight equal to 0). If the image is not in \ref SFmt_RGB format, the value
+ * is converted to RGB.
+ *
+ * \param image Image
+ * \param pos   Position on an image. May be outside of the image.
+ *
+ * \returns Pixel value on given position interpolated from nearby pixels.
+ *
+ * \sa SImage_subpixelGray, SImage_subpixelRed, SImage_subpixelGreen,
+ *   SImage_subpixelBlue, SImage_pixelRGB */
+SVec4f_t SImage_subpixelRGB(const SImage_t *image, SVec2f_t pos);
+
+/** \brief Get red channel value of a pixel with sub-pixel precision.
+ *
+ * The value is interpolated from four nearby pixels. If \p pos points
+ * outside of the image, the function returns the empty pixel (with value and
+ * weight equal to 0).
+ *
+ * \param image Image
+ * \param pos   Position on an image. May be outside of the image.
+ *
+ * \returns Red channel value on given position interpolated from nearby
+ *   pixels.
+ *
+ * \sa SImage_subpixelGreen, SImage_subpixelBlue, SImage_subpixelGray,
+ *   SImage_subpixelRGB, SImage_pixelRed */
+SVec2f_t SImage_subpixelRed(const SImage_t *image, SVec2f_t pos);
+
+/** \brief Get green channel value of a pixel with sub-pixel precision.
+ *
+ * The value is interpolated from four nearby pixels. If \p pos points
+ * outside of the image, the function returns the empty pixel (with value and
+ * weight equal to 0).
+ *
+ * \param image Image
+ * \param pos   Position on an image. May be outside of the image.
+ *
+ * \returns Green channel value on given position interpolated from nearby
+ *   pixels.
+ *
+ * \sa SImage_subpixelRed, SImage_subpixelBlue, SImage_subpixelGray,
+ *   SImage_subpixelRGB, SImage_pixelGreen */
+SVec2f_t SImage_subpixelGreen(const SImage_t *image, SVec2f_t pos);
+
+/** \brief Get blue channel value of a pixel with sub-pixel precision.
+ *
+ * The value is interpolated from four nearby pixels. If \p pos points
+ * outside of the image, the function returns the empty pixel (with value and
+ * weight equal to 0).
+ *
+ * \param image Image
+ * \param pos   Position on an image. May be outside of the image.
+ *
+ * \returns Blue channel value on given position interpolated from nearby
+ *   pixels.
+ *
+ * \sa SImage_subpixelRed, SImage_subpixelGreen, SImage_subpixelGray,
+ *   SImage_subpixelRGB, SImage_subpixelBlue */
+SVec2f_t SImage_subpixelBlue(const SImage_t *image, SVec2f_t pos);
+
 /** @} */
 /* ========================================================================= */
 /** @name Arithmetic operations
  * @{ */
 
-/** \brief Stack on image on another
+/** \brief Stack one image on another
  *
  * Stacking adds corresponding pixels from \p src image to \p tgt image.
  * Pixels are added as vectors, which results in computing weighted-mean
@@ -364,12 +523,49 @@ SVec2f_t *SImage_rowBlue(const SImage_t *image, unsigned y);
  * \param y_offset Y-offset of \p src image, used while stacking
  * \param src Source image
  *
- * \sa SImage_mask, SImage_add */
+ * \sa SImage_stackTr, SImage_stackTrInv, SImage_mask, SImage_add */
 void SImage_stack(
   SImage_t       *tgt,
   int             x_offset,
   int             y_offset,
   const SImage_t *src);
+
+/** \brief Stack transformed image on another
+ *
+ * Stacking adds corresponding pixels from \p src image to \p tgt image.
+ * Pixels are added as vectors, which results in computing weighted-mean
+ * and increasing weight. Pixes from \p src image are transformed using
+ * \p tr transformation before stacking. If \p tr is a \ref STr_Drop
+ * transformation, then no stacking is performed. This function modifies
+ * pixels in \p tgt image.
+ *
+ * \param tgt Image on which pixels are stacked
+ * \param tr  Transformation that transforms coordinates on \p src to
+ *   corresponding coordinates on \p tgt
+ * \param src Source image
+ *
+ * \sa SImage_stackTrInv, SImage_stack */
+void SImage_stackTr(
+  SImage_t           *tgt,
+  const STransform_t *tr,
+  const SImage_t     *src);
+
+/** \brief Stack transformed image on another using inversed transformation
+ *
+ * This function does the same as \ref SImage_stackTr, except that the
+ * \p tr transformation is inversed, i.e. transform coordinates on \p tgt
+ * image to corresponding coordinates on \p src image.
+ *
+ * \param tgt Image on which pixels are stacked
+ * \param tr  Transformation that transforms coordinates on \p tgt to
+ *   corresponding coordinates on \p src
+ * \param src Source image
+ *
+ * \sa SImage_stackTr, SImage_stack */
+void SImage_stackTrInv(
+  SImage_t           *tgt,
+  const STransform_t *tr,
+  const SImage_t     *src);
 
 /** \brief Apply mask on image
  *
@@ -711,6 +907,25 @@ SImage_t *SImage_loadSIWW(const char *fname);
  *
  * \return \ref SPICA_OK on success or \ref SPICA_ERROR on fail. */
 int SImage_saveSIWW(const SImage_t *image, const char *fname);
+
+/** @} */
+/* ========================================================================= */
+/** @name Image metadata and statistics
+ * @{ */
+
+/** \brief Bounding box of an image */
+inline static SBoundingBox_t SImage_boundingBox(const SImage_t *image)
+  __attribute__((unused));
+
+inline static SBoundingBox_t SImage_boundingBox(const SImage_t *image) {
+  SBoundingBox_t bb = {
+    .minX = 0.0f,
+    .minY = 0.0f,
+    .maxX = image->width  - 1,
+    .maxY = image->height - 1,
+  };
+  return bb;
+}
 
 /** @} */
 /* ========================================================================= */

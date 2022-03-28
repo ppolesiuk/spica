@@ -44,6 +44,8 @@ STransform_t SSmallChangeAligner_align(
   const STransform_t *prev_tr,
   const SStarSet_t *sset)
 {
+  if (prev_tr->type == STr_Drop) return *prev_tr;
+
   SVec2f_t sx  = { 0.0f, 0.0f };
   SVec2f_t sy  = { 0.0f, 0.0f };
   SVec2f_t sxy = { 0.0f, 0.0f };

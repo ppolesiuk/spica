@@ -44,6 +44,20 @@ static inline SVec2f_t SVec2f_complexMul(SVec2f_t a, SVec2f_t b)
 static inline SVec2f_t SVec2f_complexDiv(SVec2f_t a, SVec2f_t b)
   __attribute__((unused));
 
+/** \brief Linear interpolation of two vectors
+ *
+ * When \p a = 0, then the result is equal to the first vector, when \p a = 1,
+ * the result is equal to the second vector. */
+static inline SVec2f_t SVec2f_lerp(float a, SVec2f_t x, SVec2f_t y)
+  __attribute__((unused));
+
+/** \brief Linear interpolation of two vectors
+ *
+ * When \p a = 0, then the result is equal to the first vector, when \p a = 1,
+ * the result is equal to the second vector. */
+static inline SVec4f_t SVec4f_lerp(float a, SVec4f_t x, SVec4f_t y)
+  __attribute__((unused));
+
 /* ========================================================================= */
 
 static inline SVec2f_t SVec2f(float x, float y) {
@@ -80,6 +94,14 @@ static inline SVec2f_t SVec2f_complexMul(SVec2f_t a, SVec2f_t b) {
 
 static inline SVec2f_t SVec2f_complexDiv(SVec2f_t a, SVec2f_t b) {
   return SVec2f_complexMul(a, SVec2f_complexConj(b)) / SVec2f_lengthSq(b);
+}
+
+static inline SVec2f_t SVec2f_lerp(float a, SVec2f_t x, SVec2f_t y) {
+  return (1.0f - a) * x + a * y;
+}
+
+static inline SVec4f_t SVec4f_lerp(float a, SVec4f_t x, SVec4f_t y) {
+  return (1.0f - a) * x + a * y;
 }
 
 #endif /* __SPICA_VEC_H__ */

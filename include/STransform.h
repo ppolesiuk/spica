@@ -8,6 +8,10 @@
  * \brief 2D transformations
  */
 
+#ifndef __SPICA_TRANSFORM_H__
+#define __SPICA_TRANSFORM_H__
+
+#include "SBoundingBox.h"
 #include "SVec.h"
 
 /** \brief Type of STransform_t transformation */
@@ -53,9 +57,6 @@ static inline STransform_t STransform_shift(SVec2f_t shift)
 static inline STransform_t STransform_linear(SVec2f_t rot, SVec2f_t shift)
   __attribute__((unused));
 
-/** \brief Apply transformation to given vector */
-SVec2f_t STransform_apply(const STransform_t *tr, SVec2f_t v);
-
 /** \brief Compute the inverse transformation */
 STransform_t STransform_inverse(const STransform_t *tr);
 
@@ -66,6 +67,17 @@ STransform_t STransform_inverse(const STransform_t *tr);
 STransform_t STransform_compose(
   const STransform_t *tr2,
   const STransform_t *tr1);
+
+/** \brief Apply transformation to given vector */
+SVec2f_t STransform_apply(const STransform_t *tr, SVec2f_t v);
+
+/** \brief Apply transformation to SBoundingBox_t
+ *
+ * \returns SBoundingBox_t that is large enough, to contain transformed
+ *   bounding box. */
+SBoundingBox_t STransform_boundingBox(
+  const STransform_t *tr,
+  SBoundingBox_t      bb);
 
 /* ========================================================================= */
 static inline STransform_t STransform_shift(SVec2f_t shift) {
@@ -85,3 +97,5 @@ static inline STransform_t STransform_linear(SVec2f_t rot, SVec2f_t shift) {
   };
   return tr;
 }
+
+#endif /* __SPICA_TRANSFORM_H__ */

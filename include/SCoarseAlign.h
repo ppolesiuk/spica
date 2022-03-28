@@ -49,7 +49,8 @@ void SSmallChangeAligner_init(SSmallChangeAligner_t *aligner);
  *
  * \param aligner Settings of the aligner
  * \param ref_sset Reference set of stars, e.g., from SStarMatcher_t
- * \param prev_tr Transformation from the previous frame
+ * \param prev_tr Transformation from the previous frame. If \p prev_tr is
+ *   \ref STr_Drop, then result is also of type \ref STr_Drop.
  * \param sset Set of stars
  *
  * \returns Transformation that transforms positions of stars from

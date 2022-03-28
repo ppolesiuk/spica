@@ -148,7 +148,7 @@ void SImage_toFormat_at(
   SImageFormat_t  format)
 {
   if (image->format == SFmt_Invalid) format = SFmt_Invalid;
-  SImage_init(dst, image->width, image->height, image->format);
+  SImage_init(dst, image->width, image->height, format);
 
   switch (dst->format) {
   case SFmt_Invalid:

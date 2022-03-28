@@ -28,4 +28,11 @@ SImage_frame_t SImage_setFrame(
   int x_offset,
   int y_offset);
 
+/** Generate frame for tgt image, that contains src image after transformation
+ * tr */
+SImage_frame_t SImage_setFrameTr(
+  const SImage_t     *tgt,
+  const SImage_t     *src,
+  const STransform_t *tr);
+
 #endif /* __SIMAGE_FRAME_H__ */

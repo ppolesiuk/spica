@@ -91,3 +91,34 @@ STransform_t STransform_compose(
   }
   assert(0 && "Impossible case");
 }
+
+/* ========================================================================= */
+inline static float minf(float x, float y) {
+  return x < y ? x : y;
+}
+
+inline static float maxf(float x, float y) {
+  return x < y ? y : x;
+}
+
+SBoundingBox_t STransform_boundingBox(
+  const STransform_t *tr,
+  SBoundingBox_t      bb)
+{
+  if (SBoundingBox_isEmpty(bb) || tr->type == STr_Drop) {
+    return SBoundingBox_empty();
+  }
+
+  SVec2f_t p1 = STransform_apply(tr, SVec2f(bb.minX, bb.minY));
+  SVec2f_t p2 = STransform_apply(tr, SVec2f(bb.minX, bb.maxY));
+  SVec2f_t p3 = STransform_apply(tr, SVec2f(bb.maxX, bb.minY));
+  SVec2f_t p4 = STransform_apply(tr, SVec2f(bb.maxX, bb.maxY));
+
+  SBoundingBox_t result = {
+    .minX = minf(minf(p1[0], p2[0]), minf(p3[0], p4[0])),
+    .minY = minf(minf(p1[1], p2[1]), minf(p3[1], p4[1])),
+    .maxX = maxf(maxf(p1[0], p2[0]), maxf(p3[0], p4[0])),
+    .maxY = maxf(maxf(p1[1], p2[1]), maxf(p3[1], p4[1])),
+  };
+  return result;
+}
