@@ -38,4 +38,14 @@ typedef struct SSequence {
   SSequenceElem_t *data;
 } SSequence_t;
 
+/* ========================================================================= */
+
+void SSequence_init(SSequece_t *seq);
+
+void SSequence_deinit(SSequence_t *seq);
+
+SSequence_t *SSequence_alloc(void);
+
+void SSequence_free(SSequence_t *seq);
+
 #endif /* __SPICA_SEQUENCE_H__ */
