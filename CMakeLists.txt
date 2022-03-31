@@ -13,6 +13,7 @@ file(GLOB SOURCE_FILES
 	src/*.c
 	src/SCoarseAlign/*.c
 	src/SImage/*.c
+	src/SSequence/*.c
 	src/SStar/*.c
 	src/SStarMatcher/*.c)
 file(GLOB INCLUDE_FILES
