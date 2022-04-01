@@ -10,10 +10,12 @@
 #include "SImage.h"
 
 typedef enum SImageSourceType {
-  SIst_File
+  SIst_File,
+  SIst_User
 } SImageSourceType_t;
 
 typedef struct SImageSourceOps {
+  SImageSourceType_t type;
   void (*free)(void *);
 } SImageSourceOps_t;
 
