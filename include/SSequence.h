@@ -7,27 +7,7 @@
 #ifndef __SPICA_SEQUENCE_H__
 #define __SPICA_SEQUENCE_H__
 
-#include "SImage.h"
-
-typedef enum SImageSourceType {
-  SIst_File,
-  SIst_User
-} SImageSourceType_t;
-
-typedef struct SImageSourceOps {
-  SImageSourceType_t type;
-  void (*free)(void *);
-} SImageSourceOps_t;
-
-typedef enum SImageFileType {
-  SFtp_PNG,
-  SFtp_SIWW
-} SImageFileType_t;
-
-typedef struct SImageSource {
-  SImageSourceOps_t *ops;
-  void              *data;
-} SImageSource_t;
+#include "SImageSource.h"
 
 typedef struct SSequenceElem {
   SImageSource_t image;
@@ -50,5 +30,11 @@ void SSequence_deinit(SSequence_t *seq);
 SSequence_t *SSequence_alloc(void);
 
 void SSequence_free(SSequence_t *seq);
+
+void SSequence_addImage(SImageSourceOps_t ops, void *data);
+
+void SSequence_addImagePNG(SSequence_t *seq, const char *fname);
+
+void SSequence_addImageSIWW(SSequence_t *seq, const char *fname);
 
 #endif /* __SPICA_SEQUENCE_H__ */
