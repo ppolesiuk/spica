@@ -11,6 +11,8 @@
 
 typedef struct SSequenceElem {
   SImageSource_t image;
+  STransform_t   transform;
+  SBoundingBox_t boundingBox;
 } SSequenceElem_t;
 
 typedef struct SSequence {
@@ -20,6 +22,11 @@ typedef struct SSequence {
 } SSequence_t;
 
 /* ========================================================================= */
+
+void SSequenceElem_init(
+  SSequenceElem_t         *elem,
+  const SImageSourceOps_t *ops,
+  void                    *data);
 
 void SSequenceElem_deinit(SSequenceElem_t *elem);
 
@@ -31,7 +38,10 @@ SSequence_t *SSequence_alloc(void);
 
 void SSequence_free(SSequence_t *seq);
 
-void SSequence_addImage(SImageSourceOps_t ops, void *data);
+void SSequence_addImage(
+  SSequence_t             *seq,
+  const SImageSourceOps_t *ops,
+  void                    *data);
 
 void SSequence_addImagePNG(SSequence_t *seq, const char *fname);
 
