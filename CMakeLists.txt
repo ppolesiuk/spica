@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(spica
 	LANGUAGES   C
-	VERSION     0.0.1
+	VERSION     1.0.0
 	DESCRIPTION "Astrophotography image processing library")
 include(GNUInstallDirs)
 
