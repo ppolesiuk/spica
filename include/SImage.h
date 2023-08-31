@@ -652,7 +652,7 @@ void SImage_add(
  * \param src Source image, to be subtracted from \p tgt image
  *
  * \sa SImage_add, SImage_mul, SImage_div, SImage_subConst,
- * SImage_subConstRGB */
+ *   SImage_subConstRGB, SImage_subGradient */
 void SImage_sub(
   SImage_t       *tgt,
   int             x_offset,
@@ -745,7 +745,7 @@ void SImage_addConstRGB(SImage_t *image, float r, float g, float b);
  * \param v Value subtracted each pixel
  *
  * \sa SImage_sub, SImage_subConstRGB, SImage_addConst, SImage_mulConst,
- *   SImage_divConst */
+ *   SImage_divConst, SImage_subGradient */
 void SImage_subConst(SImage_t *image, float v);
 
 /** \brief Subtract constant value from each of RGB channels of an image
@@ -761,7 +761,7 @@ void SImage_subConst(SImage_t *image, float v);
  * \param b Value subtracted from the blue channel
  *
  * \sa SImage_sub, SImage_subConst, SImage_addConstRGB, SImage_mulConstRGB,
- *   SImage_divConstRGB */
+ *   SImage_divConstRGB, SImage_subGradient */
 void SImage_subConstRGB(SImage_t *image, float r, float g, float b);
 
 /** \brief Multiply image by a constant value
@@ -860,6 +860,18 @@ void SImage_mulWeightRGB(SImage_t *image, float r, float g, float b);
  *
  * \sa SImage_div */
 void SImage_invert(SImage_t *image);
+
+/** \brief Remove given gradient from the image
+ *
+ * This function subtracts value described by a given gradient from each
+ * pixel of an image. Weights remain unchanged.
+ *
+ * \param image Image to be modified
+ * \param grad Gradient
+ *
+ * \sa SImage_backgroundGradient, SImage_sub, SImage_subConst,
+ *   SImage_subConstRGB */
+void SImage_subGradient(SImage_t *image, const SGradient_t *grad);
 
 /** @} */
 /* ========================================================================= */
