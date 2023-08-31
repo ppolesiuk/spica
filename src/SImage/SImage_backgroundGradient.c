@@ -341,25 +341,29 @@ static int containsCenter(unsigned center_x, unsigned center_y,
 
 static SGrayGradient_t gradientOfTriangle(trianglePoint_t *triangle) {
   /* triangle base */
-  SVec2f_t b1 =
-    SVec2f(triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y);
-  SVec2f_t b2 =
-    SVec2f(triangle[2].x - triangle[0].x, triangle[1].y - triangle[0].y);
+  long b1_x = (long)triangle[1].x - (long)triangle[0].x;
+  long b1_y = (long)triangle[1].y - (long)triangle[0].y;
+  long b2_x = (long)triangle[2].x - (long)triangle[0].x;
+  long b2_y = (long)triangle[2].y - (long)triangle[0].y;
+
+  SVec2f_t b1 = SVec2f(b1_x, b1_y);
+  SVec2f_t b2 = SVec2f(b2_x, b2_y);
 
   /* gradient in trianlge base */
   SGrayGradient_t tg = {
     .bias = triangle[0].v,
-    .coef = { triangle[1].v - triangle[0].v, triangle[2].v - triangle[1].v }
+    .coef = { triangle[1].v - triangle[0].v, triangle[2].v - triangle[0].v }
   };
 
   /* inverted b matrix */
-  float det_inv = 1.0f / (b1[0]*b2[1] - b1[1]*b2[0]);
+  float det_inv = 1.0f / (b1_x * b2_y - b1_y * b2_x);
 
   SVec2f_t c1 = det_inv * SVec2f(b2[1], -b1[1]);
   SVec2f_t c2 = det_inv * SVec2f(-b2[0], b1[0]);
 
   /* coordinates of (0,0) point in a base of triangle */
-  SVec2f_t origin = -c1 * (float)(triangle[0].x) - c2 * (float)(triangle[0].y);
+  SVec2f_t origin =
+    -(c1 * (float)(triangle[0].x) + c2 * (float)(triangle[0].y));
 
   float bias = SGrayGradient_value(tg, origin[0], origin[1]);
   SVec2f_t coef_x = c1 * tg.coef;
@@ -418,9 +422,9 @@ static SGrayGradient_t grayGradient(
 
         float v = pix[0] / pix[1];
 
-        /* skip pixels with value higher than gradient line */
+        /* skip pixels with value higher than gradient value */
         if (v >= SGrayGradient_value(g, x, y)) continue; 
-     
+
         /* which point int triangle should be changed? */
         int n = -1;
         for (int i = 0; i < 3; i++) {
