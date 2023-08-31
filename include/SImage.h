@@ -2,7 +2,7 @@
  * See LICENSE for details.
  */
 
-/* Author: Piotr Polesiuk, 2022 */
+/* Author: Piotr Polesiuk, 2022-2023 */
 
 /** \file SImage.h
  *  \brief Raw images without metadata
@@ -25,8 +25,8 @@
 
 #include "SBoundingBox.h"
 #include "SCommon.h"
-#include "SVec.h"
 #include "STransform.h"
+#include "SVec.h"
 
 #include <stddef.h>
 
@@ -83,6 +83,30 @@ typedef enum SPixFormat {
   /** 16-bit RGB */
   SPF_RGB16,
 } SPixFormat_t;
+
+/** \brief Monochrome gradient */
+typedef struct SGrayGradient {
+  /** \brief Value at point (0,0) */
+  float bias;
+  /** \brief Gradient value, i.e., change of value at each pixel */
+  SVec2f_t coef;
+} SGrayGradient_t;
+
+/** \brief Gradient of an image */
+typedef struct SGradient {
+  /** \brief non-zero if it is a RGB gradient */
+  int is_color;
+  union {
+    /** \brief grayscale gradient (if is_color == 0) */
+    SGrayGradient_t gray;
+    /** \brief red gradient (if is_color != 0) */
+    SGrayGradient_t red;
+  };
+  /** \brief green gradient (if is_color != 0) */
+  SGrayGradient_t green;
+  /** \brief blue gradient (if is_color != 0) */
+  SGrayGradient_t blue;
+} SGradient_t;
 
 /* ========================================================================= */
 /** @name Constructors and destructors
@@ -836,6 +860,48 @@ void SImage_mulWeightRGB(SImage_t *image, float r, float g, float b);
  *
  * \sa SImage_div */
 void SImage_invert(SImage_t *image);
+
+/** @} */
+/* ========================================================================= */
+/** @name Image gradient
+ * @{ */
+
+
+/** \brief Get value of grayscale gradient
+ *
+ * \param grad Gradient
+ * \param x x-coordinate
+ * \param y y-coordinate
+ */
+inline static float SGrayGradient_value(SGrayGradient_t grad, float x, float y)
+  __attribute__((unused));
+
+inline static float SGrayGradient_value(SGrayGradient_t grad, float x, float y)
+{
+  SVec2f_t v = SVec2f(x, y) * grad.coef;
+  return grad.bias + v[0] + v[1];
+}
+
+/** \brief Scale gradient to scaled image
+ *
+ * \param grad Gradient to scale
+ * \param factor Factor of scale
+ */
+SGradient_t SGradient_scale(const SGradient_t *grad, float factor);
+
+/** \brief Recover background gradient of an image
+ *
+ * This function scales down image \p binning times (original image remains
+ * unchanged) and finds linear function (gradient) that is the largest (in
+ * terms of its value on the center of an image), but is pointwise smaller
+ * than the value of an image. The value of \p binning should be smaller than
+ * the size of an image, but larger values help to reduce noise.
+ *
+ * \param image Input image
+ * \param binning Factor on which images is scaled before gradient finding
+ *   algorithm.
+ */
+SGradient_t SImage_backgroundGradient(const SImage_t *image, unsigned binning);
 
 /** @} */
 /* ========================================================================= */
