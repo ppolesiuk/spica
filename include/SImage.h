@@ -2,7 +2,7 @@
  * See LICENSE for details.
  */
 
-/* Author: Piotr Polesiuk, 2022 */
+/* Author: Piotr Polesiuk, 2022-2023 */
 
 /** \file SImage.h
  *  \brief Raw images without metadata
@@ -580,12 +580,53 @@ void SImage_stackTrInv(
  * \param y_offset Y-offset of a mask
  * \param mask Mask image
  *
- * \sa SImage_mul, SImage_mulWeight, SImage_mulWeightRGB */
+ * \sa SImage_mul, SImage_mulWeight, SImage_mulWeightRGB, SImage_maskTr,
+ *   SImage_maskTrInv */
 void SImage_mask(
   SImage_t       *image,
   int             x_offset,
   int             y_offset,
   const SImage_t *mask);
+
+/** \brief Apply transformed mask on image
+ *
+ * This function multiply both pixel value and weigth of \p image image by
+ * corresponding pixel of \p mask image, normalized with respect to pixel
+ * weight. Pixels from \p mask image are transformed using \p tr
+ * transformation before operation. If \p tr is a \ref STr_Drop
+ * transformation, then no operation is performed.
+ * 
+ * Because masking is a multiplication of value-weight vector by a scalar,
+ * using color masks makes sense only for \ref SFmt_SeparateRGB images.
+ * For other formats, mask is converted to \ref SFmt_Gray before applying.
+ *
+ * \param image Image to be masked
+ * \param tr  Transformation that transforms coordinates on \p mask to
+ *   corresponding coordinates on \p image
+ * \param mask Mask image
+ *
+ * \sa SImage_maskTrInv, SImage_mask */
+void SImage_maskTr(
+  SImage_t           *image,
+  const STransform_t *tr,
+  const SImage_t     *mask);
+
+/** \brief Apply transformed mask on image using inversed transformation
+ *
+ * This function does the same as \ref SImage_maskTr, except that the
+ * \p tr transformation is inversed, i.e. transform coordinates on \p image
+ * image to corresponding coordinates on \p mask image.
+ *
+ * \param image Image to be masked
+ * \param tr  Transformation that transforms coordinates on \p image to
+ *   corresponding coordinates on \p mask
+ * \param mask Mask image
+ *
+ * \sa SImage_maskTr, SImage_mask */
+void SImage_maskTrInv(
+  SImage_t           *image,
+  const STransform_t *tr,
+  const SImage_t     *mask);
 
 /** \brief Add one image to another
  *
@@ -671,7 +712,7 @@ void SImage_subTr(
  *   corresponding coordinates on \p src
  * \param src Source image, to be subtracted from \p tgt image
  *
- * \sa SImage_stackTr, SImage_stack */
+ * \sa SImage_subTr, SImage_sub */
 void SImage_subTrInv(
   SImage_t           *tgt,
   const STransform_t *tr,
