@@ -534,7 +534,7 @@ void SImage_stack(
  *
  * Stacking adds corresponding pixels from \p src image to \p tgt image.
  * Pixels are added as vectors, which results in computing weighted-mean
- * and increasing weight. Pixes from \p src image are transformed using
+ * and increasing weight. Pixels from \p src image are transformed using
  * \p tr transformation before stacking. If \p tr is a \ref STr_Drop
  * transformation, then no stacking is performed. This function modifies
  * pixels in \p tgt image.
@@ -572,7 +572,7 @@ void SImage_stackTrInv(
  * Applying mask is a multiplication both pixel values and weight by a 
  * normalized value of corresponding pixel from a mask. Because it uses
  * multiplication of value-weight vector by a scalar, using color masks
- * makes sense only for \ref SFmt_SeparateRGB images. For different formats,
+ * makes sense only for \ref SFmt_SeparateRGB images. For other formats,
  * mask is converted to \ref SFmt_Gray before applying.
  *
  * \param image Image to be masked
@@ -612,7 +612,7 @@ void SImage_add(
   int             y_offset,
   const SImage_t *src);
 
-/** \brief Subtract one image to another
+/** \brief Subtract one image from another
  *
  * This function arithmetically subtract pixel of \p src image from
  * corresponding pixels of \p tgt image. This function operates on values
@@ -627,13 +627,55 @@ void SImage_add(
  * \param y_offset Y-offset of \p src image
  * \param src Source image, to be subtracted from \p tgt image
  *
- * \sa SImage_add, SImage_mul, SImage_div, SImage_subConst,
- * SImage_subConstRGB */
+ * \sa SImage_add, SImage_mul, SImage_div, SImage_subTr, SImage_subTrInv,
+ *   SImage_subConst, SImage_subConstRGB */
 void SImage_sub(
   SImage_t       *tgt,
   int             x_offset,
   int             y_offset,
   const SImage_t *src);
+
+/** \brief Subtract transformed image from another
+ *
+ * This function arithmetically subtract pixel of \p src image from
+ * corresponding pixels of \p tgt image. Pixels from \p src image are
+ * transformed using \p tr transformation before subtraction. If \p tr
+ * is a \ref STr_Drop transformation, then no subtraction is performed.
+ * This function operates on values normalized with respect to pixel weight.
+ * Weights remain unchanged.
+ *
+ * Images may have different formats. If so, the \p src image is internally
+ * converted to the format of \p tgt image, before the operation, while
+ * original \p src remains untouched.
+ *
+ * \param tgt Target image of a subtraction
+ * \param tr  Transformation that transforms coordinates on \p src to
+ *   corresponding coordinates on \p tgt
+ * \param src Source image, to be subtracted from \p tgt image
+ *
+ * \sa SImage_sub, SImage_subTrInv */
+void SImage_subTr(
+  SImage_t           *tgt,
+  const STransform_t *tr,
+  const SImage_t     *src);
+
+/** \brief Subtract transformed image from another using inversed
+ * transformation
+ *
+ * This function does the same as \ref SImage_subTr, except that the
+ * \p tr transformation is inversed, i.e. transform coordinates on \p tgt
+ * image to corresponding coordinates on \p src image.
+ *
+ * \param tgt Target image of a subtraction
+ * \param tr  Transformation that transforms coordinates on \p tgt to
+ *   corresponding coordinates on \p src
+ * \param src Source image, to be subtracted from \p tgt image
+ *
+ * \sa SImage_stackTr, SImage_stack */
+void SImage_subTrInv(
+  SImage_t           *tgt,
+  const STransform_t *tr,
+  const SImage_t     *src);
 
 /** \brief Multiply one image by another
  *
