@@ -775,13 +775,56 @@ void SImage_subTrInv(
  * \param y_offset Y-offset of \p src image
  * \param src Source image -- the another factor
  *
- * \sa SImage_mask, SImage_add, SImage_sub, SImage_div, SImage_mulConst,
- *   SImage_mulConstRGB, SImage_mulWeight, SImage_mulWeightRGB */
+ * \sa SImage_mask, SImage_add, SImage_sub, SImage_div, SImage_mulTr,
+ *   SImage_mulTrInv, SImage_mulConst, SImage_mulConstRGB, SImage_mulWeight,
+ *   SImage_mulWeightRGB */
 void SImage_mul(
   SImage_t       *tgt,
   int             x_offset,
   int             y_offset,
   const SImage_t *src);
+
+/** \brief Multiply transformed image by another
+ *
+ * This function arithmetically multiplies pixel of \p src image by
+ * corresponding pixels of \p tgt image. Pixels from \p src image are
+ * transformed using \p tr transformation before multiplication. If \p tr
+ * is a \ref STr_Drop transformation, then no operation is performed.
+ * This function operates on values normalized with respect to pixel weight.
+ * Weights remain unchanged.
+ *
+ * Images may have different formats. If so, the \p src image is internally
+ * converted to the format of \p tgt image, before the operation, while
+ * original \p src remains untouched.
+ *
+ * \param tgt Target image of a multiplication
+ * \param tr  Transformation that transforms coordinates on \p src to
+ *   corresponding coordinates on \p tgt
+ * \param src Source image, to be multiplied by \p tgt image
+ *
+ * \sa SImage_mul, SImage_mulTrInv */
+void SImage_mulTr(
+  SImage_t           *tgt,
+  const STransform_t *tr,
+  const SImage_t     *src);
+
+/** \brief Multiply transformed image by another using inversed
+ * transformation
+ *
+ * This function does the same as \ref SImage_mulTr, except that the
+ * \p tr transformation is inversed, i.e. transform coordinates on \p tgt
+ * image to corresponding coordinates on \p src image.
+ *
+ * \param tgt Target image of a multiplication
+ * \param tr  Transformation that transforms coordinates on \p tgt to
+ *   corresponding coordinates on \p src
+ * \param src Source image, to be multiplied by \p tgt image
+ *
+ * \sa SImage_mulTr, SImage_mul */
+void SImage_mulTrInv(
+  SImage_t           *tgt,
+  const STransform_t *tr,
+  const SImage_t     *src);
 
 /** \brief Divide one image by another
  *
