@@ -558,7 +558,7 @@ void SImage_stack(
  *
  * Stacking adds corresponding pixels from \p src image to \p tgt image.
  * Pixels are added as vectors, which results in computing weighted-mean
- * and increasing weight. Pixes from \p src image are transformed using
+ * and increasing weight. Pixels from \p src image are transformed using
  * \p tr transformation before stacking. If \p tr is a \ref STr_Drop
  * transformation, then no stacking is performed. This function modifies
  * pixels in \p tgt image.
@@ -596,7 +596,7 @@ void SImage_stackTrInv(
  * Applying mask is a multiplication both pixel values and weight by a 
  * normalized value of corresponding pixel from a mask. Because it uses
  * multiplication of value-weight vector by a scalar, using color masks
- * makes sense only for \ref SFmt_SeparateRGB images. For different formats,
+ * makes sense only for \ref SFmt_SeparateRGB images. For other formats,
  * mask is converted to \ref SFmt_Gray before applying.
  *
  * \param image Image to be masked
@@ -604,12 +604,53 @@ void SImage_stackTrInv(
  * \param y_offset Y-offset of a mask
  * \param mask Mask image
  *
- * \sa SImage_mul, SImage_mulWeight, SImage_mulWeightRGB */
+ * \sa SImage_mul, SImage_mulWeight, SImage_mulWeightRGB, SImage_maskTr,
+ *   SImage_maskTrInv */
 void SImage_mask(
   SImage_t       *image,
   int             x_offset,
   int             y_offset,
   const SImage_t *mask);
+
+/** \brief Apply transformed mask on image
+ *
+ * This function multiply both pixel value and weigth of \p image image by
+ * corresponding pixel of \p mask image, normalized with respect to pixel
+ * weight. Pixels from \p mask image are transformed using \p tr
+ * transformation before operation. If \p tr is a \ref STr_Drop
+ * transformation, then no operation is performed.
+ * 
+ * Because masking is a multiplication of value-weight vector by a scalar,
+ * using color masks makes sense only for \ref SFmt_SeparateRGB images.
+ * For other formats, mask is converted to \ref SFmt_Gray before applying.
+ *
+ * \param image Image to be masked
+ * \param tr  Transformation that transforms coordinates on \p mask to
+ *   corresponding coordinates on \p image
+ * \param mask Mask image
+ *
+ * \sa SImage_maskTrInv, SImage_mask */
+void SImage_maskTr(
+  SImage_t           *image,
+  const STransform_t *tr,
+  const SImage_t     *mask);
+
+/** \brief Apply transformed mask on image using inversed transformation
+ *
+ * This function does the same as \ref SImage_maskTr, except that the
+ * \p tr transformation is inversed, i.e. transform coordinates on \p image
+ * image to corresponding coordinates on \p mask image.
+ *
+ * \param image Image to be masked
+ * \param tr  Transformation that transforms coordinates on \p image to
+ *   corresponding coordinates on \p mask
+ * \param mask Mask image
+ *
+ * \sa SImage_maskTr, SImage_mask */
+void SImage_maskTrInv(
+  SImage_t           *image,
+  const STransform_t *tr,
+  const SImage_t     *mask);
 
 /** \brief Add one image to another
  *
@@ -628,17 +669,58 @@ void SImage_mask(
  * \param y_offset Y-offset of \p src image
  * \param src Source image
  *
- * \sa SImage_stack, SImage_sub, SImage_mul, SImage_div, SImage_addConst,
- *   SImage_addConstRGB */
+ * \sa SImage_stack, SImage_sub, SImage_mul, SImage_div, SImage_addTr,
+ *   SImage_addTrInv, SImage_addConst, SImage_addConstRGB */
 void SImage_add(
   SImage_t       *tgt,
   int             x_offset,
   int             y_offset,
   const SImage_t *src);
 
-/** \brief Subtract one image to another
+/** \brief Add transformed image to another
  *
- * This function arithmetically subtract pixel of \p src image from
+ * This function arithmetically adds pixel of \p src image to
+ * corresponding pixels of \p tgt image. Pixels from \p src image are
+ * transformed using \p tr transformation before addition. If \p tr
+ * is a \ref STr_Drop transformation, then no operation is performed.
+ * This function operates on values normalized with respect to pixel weight.
+ * Weights remain unchanged.
+ *
+ * Images may have different formats. If so, the \p src image is internally
+ * converted to the format of \p tgt image, before the operation, while
+ * original \p src remains untouched.
+ *
+ * \param tgt Target image of an addition
+ * \param tr  Transformation that transforms coordinates on \p src to
+ *   corresponding coordinates on \p tgt
+ * \param src Source image, to be added to a \p tgt image
+ *
+ * \sa SImage_add, SImage_addTrInv */
+void SImage_addTr(
+  SImage_t           *tgt,
+  const STransform_t *tr,
+  const SImage_t     *src);
+
+/** \brief Add transformed image to another using inversed transformation
+ *
+ * This function does the same as \ref SImage_addTr, except that the
+ * \p tr transformation is inversed, i.e. transform coordinates on \p tgt
+ * image to corresponding coordinates on \p src image.
+ *
+ * \param tgt Target image of an addition
+ * \param tr  Transformation that transforms coordinates on \p tgt to
+ *   corresponding coordinates on \p src
+ * \param src Source image, to be added to \p tgt image
+ *
+ * \sa SImage_addTr, SImage_add */
+void SImage_addTrInv(
+  SImage_t           *tgt,
+  const STransform_t *tr,
+  const SImage_t     *src);
+
+/** \brief Subtract one image from another
+ *
+ * This function arithmetically subtracts pixel of \p src image from
  * corresponding pixels of \p tgt image. This function operates on values
  * normalized with respect to pixel weight. Weights remain unchanged.
  *
@@ -651,13 +733,55 @@ void SImage_add(
  * \param y_offset Y-offset of \p src image
  * \param src Source image, to be subtracted from \p tgt image
  *
- * \sa SImage_add, SImage_mul, SImage_div, SImage_subConst,
- *   SImage_subConstRGB, SImage_subGradient */
+ * \sa SImage_add, SImage_mul, SImage_div, SImage_subTr, SImage_subTrInv,
+ *   SImage_subConst, SImage_subConstRGB, SImage_subGradient */
 void SImage_sub(
   SImage_t       *tgt,
   int             x_offset,
   int             y_offset,
   const SImage_t *src);
+
+/** \brief Subtract transformed image from another
+ *
+ * This function arithmetically subtracts pixel of \p src image from
+ * corresponding pixels of \p tgt image. Pixels from \p src image are
+ * transformed using \p tr transformation before subtraction. If \p tr
+ * is a \ref STr_Drop transformation, then no subtraction is performed.
+ * This function operates on values normalized with respect to pixel weight.
+ * Weights remain unchanged.
+ *
+ * Images may have different formats. If so, the \p src image is internally
+ * converted to the format of \p tgt image, before the operation, while
+ * original \p src remains untouched.
+ *
+ * \param tgt Target image of a subtraction
+ * \param tr  Transformation that transforms coordinates on \p src to
+ *   corresponding coordinates on \p tgt
+ * \param src Source image, to be subtracted from \p tgt image
+ *
+ * \sa SImage_sub, SImage_subTrInv */
+void SImage_subTr(
+  SImage_t           *tgt,
+  const STransform_t *tr,
+  const SImage_t     *src);
+
+/** \brief Subtract transformed image from another using inversed
+ * transformation
+ *
+ * This function does the same as \ref SImage_subTr, except that the
+ * \p tr transformation is inversed, i.e. transform coordinates on \p tgt
+ * image to corresponding coordinates on \p src image.
+ *
+ * \param tgt Target image of a subtraction
+ * \param tr  Transformation that transforms coordinates on \p tgt to
+ *   corresponding coordinates on \p src
+ * \param src Source image, to be subtracted from \p tgt image
+ *
+ * \sa SImage_subTr, SImage_sub */
+void SImage_subTrInv(
+  SImage_t           *tgt,
+  const STransform_t *tr,
+  const SImage_t     *src);
 
 /** \brief Multiply one image by another
  *
@@ -675,17 +799,60 @@ void SImage_sub(
  * \param y_offset Y-offset of \p src image
  * \param src Source image -- the another factor
  *
- * \sa SImage_mask, SImage_add, SImage_sub, SImage_div, SImage_mulConst,
- *   SImage_mulConstRGB, SImage_mulWeight, SImage_mulWeightRGB */
+ * \sa SImage_mask, SImage_add, SImage_sub, SImage_div, SImage_mulTr,
+ *   SImage_mulTrInv, SImage_mulConst, SImage_mulConstRGB, SImage_mulWeight,
+ *   SImage_mulWeightRGB */
 void SImage_mul(
   SImage_t       *tgt,
   int             x_offset,
   int             y_offset,
   const SImage_t *src);
 
+/** \brief Multiply transformed image by another
+ *
+ * This function arithmetically multiplies pixel of \p src image by
+ * corresponding pixels of \p tgt image. Pixels from \p src image are
+ * transformed using \p tr transformation before multiplication. If \p tr
+ * is a \ref STr_Drop transformation, then no operation is performed.
+ * This function operates on values normalized with respect to pixel weight.
+ * Weights remain unchanged.
+ *
+ * Images may have different formats. If so, the \p src image is internally
+ * converted to the format of \p tgt image, before the operation, while
+ * original \p src remains untouched.
+ *
+ * \param tgt Target image of a multiplication
+ * \param tr  Transformation that transforms coordinates on \p src to
+ *   corresponding coordinates on \p tgt
+ * \param src Source image, to be multiplied by \p tgt image
+ *
+ * \sa SImage_mul, SImage_mulTrInv */
+void SImage_mulTr(
+  SImage_t           *tgt,
+  const STransform_t *tr,
+  const SImage_t     *src);
+
+/** \brief Multiply transformed image by another using inversed
+ * transformation
+ *
+ * This function does the same as \ref SImage_mulTr, except that the
+ * \p tr transformation is inversed, i.e. transform coordinates on \p tgt
+ * image to corresponding coordinates on \p src image.
+ *
+ * \param tgt Target image of a multiplication
+ * \param tr  Transformation that transforms coordinates on \p tgt to
+ *   corresponding coordinates on \p src
+ * \param src Source image, to be multiplied by \p tgt image
+ *
+ * \sa SImage_mulTr, SImage_mul */
+void SImage_mulTrInv(
+  SImage_t           *tgt,
+  const STransform_t *tr,
+  const SImage_t     *src);
+
 /** \brief Divide one image by another
  *
- * This function arithmetically divide pixel of \p dst image by
+ * This function arithmetically divides pixel of \p dst image by
  * corresponding pixels of \p src image. This function operates on values
  * normalized with respect to pixel weight. Weights remain unchanged.
  *
@@ -698,13 +865,55 @@ void SImage_mul(
  * \param y_offset Y-offset of \p src image
  * \param src Source image -- the divisor
  *
- * \sa SImage_add, SImage_sub, SImage_mul, SImage_divConst,
- *   SImage_divConstRGB, SImage_invert */
+ * \sa SImage_add, SImage_sub, SImage_mul, SImage_divTr, SImage_divTrInv,
+ *   SImage_divConst, SImage_divConstRGB, SImage_invert */
 void SImage_div(
   SImage_t       *tgt,
   int             x_offset,
   int             y_offset,
   const SImage_t *src);
+
+/** \brief Divide transformed image by another
+ *
+ * This function arithmetically divides pixel of \p src image by
+ * corresponding pixels of \p tgt image. Pixels from \p src image are
+ * transformed using \p tr transformation before division. If \p tr
+ * is a \ref STr_Drop transformation, then no operation is performed.
+ * This function operates on values normalized with respect to pixel weight.
+ * Weights remain unchanged.
+ *
+ * Images may have different formats. If so, the \p src image is internally
+ * converted to the format of \p tgt image, before the operation, while
+ * original \p src remains untouched.
+ *
+ * \param tgt Target image, and the divident
+ * \param tr  Transformation that transforms coordinates on \p src to
+ *   corresponding coordinates on \p tgt
+ * \param src Source image -- the divisor
+ *
+ * \sa SImage_div, SImage_divTrInv */
+void SImage_divTr(
+  SImage_t           *tgt,
+  const STransform_t *tr,
+  const SImage_t     *src);
+
+/** \brief Divide transformed image by another using inversed
+ * transformation
+ *
+ * This function does the same as \ref SImage_divTr, except that the
+ * \p tr transformation is inversed, i.e. transform coordinates on \p tgt
+ * image to corresponding coordinates on \p src image.
+ *
+ * \param tgt Target image, and the divident
+ * \param tr  Transformation that transforms coordinates on \p tgt to
+ *   corresponding coordinates on \p src
+ * \param src Source image -- the divisor
+ *
+ * \sa SImage_divTr, SImage_div */
+void SImage_divTrInv(
+  SImage_t           *tgt,
+  const STransform_t *tr,
+  const SImage_t     *src);
 
 /** \brief Add constant value to an image
  *
