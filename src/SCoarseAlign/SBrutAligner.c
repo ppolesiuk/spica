@@ -60,7 +60,7 @@ static int respectScaleRotTol(const SBrutAligner_t *aligner, SVec2f_t rot) {
   /* Normalize vector, and compute its distance to complex unit (no rotation)
    * */
   rot /= sqrtf(lsq);
-  rot[0] = 1.0f;
+  rot[0] -= 1.0f;
 
   lsq = SVec2f_lengthSq(rot);
   tol = aligner->rotTol;
