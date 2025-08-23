@@ -8,7 +8,8 @@
 
 void SSmallChangeAligner_init(SSmallChangeAligner_t *aligner) {
   aligner->distThreshold = 5.0f;
-  aligner->minStarN = 4;
+  aligner->minStarN      = -1;
+  aligner->minStarFrac   = 0.5f;
 }
 
 static int closestStarIndex(
@@ -73,7 +74,11 @@ STransform_t SSmallChangeAligner_align(
   sxy *= (float)tot;
   sx2 *= (float)tot;
   float s2x = SVec2f_lengthSq(sx);
-  if (tot < aligner->minStarN || sx2 == s2x) {
+  int minStarN =
+    (aligner->minStarN >= 0
+    ? aligner->minStarN
+    : aligner->minStarFrac * sset->length);
+  if (tot < minStarN || sx2 == s2x) {
     tr.type  = STr_Drop;
     tr.rot   = SVec2f(1.0f, 0.0f);
     tr.shift = SVec2f(0.0f, 0.0f);

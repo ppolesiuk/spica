@@ -83,8 +83,8 @@ SBoundingBox_t STransform_boundingBox(
 static inline STransform_t STransform_shift(SVec2f_t shift) {
   STransform_t tr = {
     .type  = STr_Shift,
-    .shift = shift,
-    .rot   = { 1.0f, 0.0f }
+    .rot   = { 1.0f, 0.0f },
+    .shift = shift
   };
   return tr;
 }

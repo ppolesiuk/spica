@@ -32,8 +32,12 @@ typedef struct SSmallChangeAligner {
   /** \brief maximal distance to matched star (in sigmas) */
   float distThreshold;
   /** \brief minimal number of matched stars, to accept matching (otherwise
-   *    \ref STr_Drop is returned). */
+   *    \ref STr_Drop is returned). Negative means that the value is computed
+   *    from \ref minStarFrac. */
   int   minStarN;
+  /** \brief the fraction of input stars required to accept matching, if
+   *    \ref minStarN is negative. */
+  float minStarFrac;
 } SSmallChangeAligner_t;
 
 /** \brief Initialize SSmallChangeAligner_t with default values
@@ -41,7 +45,8 @@ typedef struct SSmallChangeAligner {
  * Field         | Default value
  * --------------| -------------
  * distThreshold | 5.0f
- * minStarN      | 4
+ * minStarN      | -1
+ * minStarFrac   | 0.5f
  */
 void SSmallChangeAligner_init(SSmallChangeAligner_t *aligner);
 
@@ -97,8 +102,8 @@ typedef struct SBrutAligner {
  *
  * Field     | Default value
  * --------- | -------------
- * starN     | 30
- * refStarN  | -1
+ * starN     | 20
+ * refStarN  | 30
  * rankStarN | -1
  * distTol   | 1.5f
  * scaleTol  | 0.1f

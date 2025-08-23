@@ -87,6 +87,10 @@ static void processCandidate(
 
   SStar_fit(&star, image, finder->fitSteps);
 
+  /* remove NaN stars */
+  if (star.brightness != star.brightness) return;
+  if (star.pos[0] != star.pos[0]) return;
+
   if (star.brightness < finder->brightnessThreshold) return;
   if (starIsInSet(finder, &star, sset)) return;
 

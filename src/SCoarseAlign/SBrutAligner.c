@@ -9,8 +9,8 @@
 #include <math.h>
 
 void SBrutAligner_init(SBrutAligner_t *aligner) {
-  aligner->starN     = 30;
-  aligner->refStarN  = -1;
+  aligner->starN     = 20;
+  aligner->refStarN  = 30;
   aligner->rankStarN = -1;
   aligner->distTol   = 1.5f;
   aligner->scaleTol  = 0.1f;
