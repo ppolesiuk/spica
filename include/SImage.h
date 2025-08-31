@@ -2,7 +2,7 @@
  * See LICENSE for details.
  */
 
-/* Author: Piotr Polesiuk, 2022-2023 */
+/* Author: Piotr Polesiuk, 2022-2023,2025 */
 
 /** \file SImage.h
  *  \brief Raw images without metadata
@@ -605,7 +605,7 @@ void SImage_stackTrInv(
  * \param mask Mask image
  *
  * \sa SImage_mul, SImage_mulWeight, SImage_mulWeightRGB, SImage_maskTr,
- *   SImage_maskTrInv */
+ *   SImage_maskTrInv, SImage_maskByWeight */
 void SImage_mask(
   SImage_t       *image,
   int             x_offset,
@@ -629,7 +629,7 @@ void SImage_mask(
  *   corresponding coordinates on \p image
  * \param mask Mask image
  *
- * \sa SImage_maskTrInv, SImage_mask */
+ * \sa SImage_maskTrInv, SImage_mask, SImage_maskByWeightTr */
 void SImage_maskTr(
   SImage_t           *image,
   const STransform_t *tr,
@@ -646,8 +646,70 @@ void SImage_maskTr(
  *   corresponding coordinates on \p mask
  * \param mask Mask image
  *
- * \sa SImage_maskTr, SImage_mask */
+ * \sa SImage_maskTr, SImage_mask, SImage_maskByWeightTrInv */
 void SImage_maskTrInv(
+  SImage_t           *image,
+  const STransform_t *tr,
+  const SImage_t     *mask);
+
+/** \brief Apply mask on image using mask's pixel weights
+ *
+ * This function multiply both pixel value and weigth of \p image image by
+ * weight of corresponding pixel of \p mask image. Because it uses
+ * multiplication of value-weight vector by a scalar, using
+ * \ref SFmt_SeparateRGB masks makes sense only for such images. For other
+ * formats, mask is converted to \ref SFmt_Gray before applying.
+ *
+ * \param image Image to be masked
+ * \param x_offset X-offset of a mask
+ * \param y_offset Y-offset of a mask
+ * \param mask Mask image
+ *
+ * \sa SImage_mask, SImage_maskByWeightTr, SImage_maskByWeightTrInv,
+ *  SImage_mul, SImage_mulWeight, SImage_mulWeightRGB */
+void SImage_maskByWeight(
+  SImage_t       *image,
+  int             x_offset,
+  int             y_offset,
+  const SImage_t *mask);
+
+/** \brief Apply transformed mask on image using mask's pixel weights
+ *
+ * This function multiply both pixel value and weigth of \p image image by
+ * weight of corresponding pixel of \p mask image. Pixels from \p mask
+ * image are transformed using \p tr transformation before operation.
+ * If \p tr is a \ref STr_Drop transformation, then no operation is performed.
+ *
+ * Because it uses multiplication of value-weight vector by a scalar,
+ * using \ref SFmt_SeparateRGB masks makes sense only for such images.
+ *
+ * \param image Image to be masked
+ * \param tr  Transformation that transforms coordinates on \p mask to
+ *   corresponding coordinates on \p image
+ * \param mask Mask image
+ *
+ * \sa SImage_maskByWeightTrInv, SImage_maskByWeight, SImage_maskTr,
+ *   SImage_mulTr, SImage_mulWeight, SImage_mulWeightRGB */
+void SImage_maskByWeightTr(
+  SImage_t           *image,
+  const STransform_t *tr,
+  const SImage_t     *mask);
+
+/** \brief Apply transformed mask on image using inversed transformation
+ *  and mask's pixel weights
+ *
+ * This function does the same as \ref SImage_maskByWeightTr, except that the
+ * \p tr transformation is inversed, i.e. transform coordinates on \p image
+ * image to corresponding coordinates on \p mask image.
+ *
+ * \param image Image to be masked
+ * \param tr  Transformation that transforms coordinates on \p image to
+ *   corresponding coordinates on \p mask
+ * \param mask Mask image
+ *
+ * \sa SImage_maskByWeightTr, SImage_maskByWeight, SImage_maskTrInv,
+ *   SImage_mulTrInv, SImage_mulWeight, SImage_mulWeightRGB */
+void SImage_maskByWeightTrInv(
   SImage_t           *image,
   const STransform_t *tr,
   const SImage_t     *mask);
@@ -1070,6 +1132,18 @@ void SImage_mulWeightRGB(SImage_t *image, float r, float g, float b);
  * \sa SImage_div */
 void SImage_invert(SImage_t *image);
 
+/** \brief Add given gradient to the image
+ *
+ * This function adds value described by a given gradient to each pixel of
+ * an image. Weights remain unchanged.
+ *
+ * \param image Image to be modified
+ * \param grad Gradient
+ *
+ * \sa SImage_subGradient, SImage_backgroundGradient, SImage_add,
+ *   SImage_addConst, SImage_addConstRGB */
+void SImage_addGradient(SImage_t *image, const SGradient_t *grad);
+
 /** \brief Remove given gradient from the image
  *
  * This function subtracts value described by a given gradient from each
@@ -1078,8 +1152,8 @@ void SImage_invert(SImage_t *image);
  * \param image Image to be modified
  * \param grad Gradient
  *
- * \sa SImage_backgroundGradient, SImage_sub, SImage_subConst,
- *   SImage_subConstRGB */
+ * \sa SImage_addGradient, SImage_backgroundGradient, SImage_sub,
+ *   SImage_subConst, SImage_subConstRGB */
 void SImage_subGradient(SImage_t *image, const SGradient_t *grad);
 
 /** @} */
@@ -1102,6 +1176,12 @@ inline static float SGrayGradient_value(SGrayGradient_t grad, float x, float y)
   SVec2f_t v = SVec2f(x, y) * grad.coef;
   return grad.bias + v[0] + v[1];
 }
+
+/** \brief Negate (additive inverse) gradient
+ *
+ * \param grad Gradient to negate
+ */
+SGradient_t SGradient_negate(const SGradient_t *grad);
 
 /** \brief Scale gradient to scaled image
  *
