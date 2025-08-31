@@ -795,8 +795,9 @@ void SImage_addTrInv(
  * \param y_offset Y-offset of \p src image
  * \param src Source image, to be subtracted from \p tgt image
  *
- * \sa SImage_add, SImage_mul, SImage_div, SImage_subTr, SImage_subTrInv,
- *   SImage_subConst, SImage_subConstRGB, SImage_subGradient */
+ * \sa SImage_add, SImage_mul, SImage_div, SImage_negate, SImage_subTr,
+ *   SImage_subTrInv, SImage_subConst, SImage_subConstRGB,
+ *   SImage_subGradient */
 void SImage_sub(
   SImage_t       *tgt,
   int             x_offset,
@@ -1117,6 +1118,19 @@ void SImage_mulWeight(SImage_t *image, float v);
  * \sa SImage_mul, SImage_mulConst, SImage_mulConstRGB, SImage_mulWeightRGB */
 void SImage_mulWeightRGB(SImage_t *image, float r, float g, float b);
 
+/** \brief Negate (additive inverse) each pixel of an image
+ *
+ * This function negates (additive inverse) each of image pixel: if a pixel has
+ * normalized brightness \f$x\f$, then negated pixel has normalized brightness
+ * \f$-x\f$. This function does not modify pixel weights. In order to obtain
+ * negative of an image, the constant 1 should be added to the negated
+ * image.
+ *
+ * \param image Image to be negated
+ *
+ * \sa SImage_sub, SImage_invert, SImage_addConst */
+void SImage_negate(SImage_t *image);
+
 /** \brief Invert (multiplicatively) each pixel of an image
  *
  * This function multiplicatively inverts each of image pixel: if a pixel has
@@ -1129,7 +1143,7 @@ void SImage_mulWeightRGB(SImage_t *image, float r, float g, float b);
  *
  * \param image Image to be inverted
  *
- * \sa SImage_div */
+ * \sa SImage_div, SImage_negate */
 void SImage_invert(SImage_t *image);
 
 /** \brief Add given gradient to the image
