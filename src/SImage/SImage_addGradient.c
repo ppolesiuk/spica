@@ -6,7 +6,58 @@
 
 #include "SImage.h"
 
+static void addGrayGradient(
+  SVec2f_t *data, size_t width, size_t height, SGrayGradient_t grad)
+{
+  for (size_t y = 0; y < height; y++) {
+    for (size_t x = 0; x < width; x++) {
+      size_t i = y*width + x;
+      data[i][0] += data[i][1] * SGrayGradient_value(grad, x, y);
+    }
+  }
+}
+
+static void addRGBGradient(
+  SVec4f_t *data, size_t width, size_t height,
+  SGrayGradient_t rg, SGrayGradient_t gg, SGrayGradient_t bg)
+{
+  for (size_t y = 0; y < height; y++) {
+    for (size_t x = 0; x < width; x++) {
+      size_t i = y*width + x;
+      float w = data[i][3];
+      data[i][0] += w * SGrayGradient_value(rg, x, y);
+      data[i][1] += w * SGrayGradient_value(gg, x, y);
+      data[i][2] += w * SGrayGradient_value(bg, x, y);
+    }
+  }
+}
+
 void SImage_addGradient(SImage_t *image, const SGradient_t *grad) {
-  SGradient_t neg = SGradient_negate(grad);
-  SImage_subGradient(image, &neg);
+  switch (image->format) {
+  case SFmt_Invalid:
+    return;
+  case SFmt_Gray:
+    addGrayGradient(
+      image->data_gray, image->width, image->height,
+      SGradient_grayGradient(grad));
+    break;
+  case SFmt_RGB:
+    addRGBGradient(
+      image->data_rgb, image->width, image->height,
+      SGradient_redGradient(grad),
+      SGradient_greenGradient(grad),
+      SGradient_blueGradient(grad));
+    break;
+  case SFmt_SeparateRGB:
+    addGrayGradient(
+      SImage_dataRed(image),   image->width, image->height,
+      SGradient_redGradient(grad));
+    addGrayGradient(
+      SImage_dataGreen(image), image->width, image->height,
+      SGradient_greenGradient(grad));
+    addGrayGradient(
+      SImage_dataBlue(image),  image->width, image->height,
+      SGradient_blueGradient(grad));
+    break;
+  }
 }

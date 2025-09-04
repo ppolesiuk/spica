@@ -1170,11 +1170,64 @@ void SImage_addGradient(SImage_t *image, const SGradient_t *grad);
  *   SImage_subConst, SImage_subConstRGB */
 void SImage_subGradient(SImage_t *image, const SGradient_t *grad);
 
+/** \brief Multiply image by a gradient
+ *
+ * This function multiplies each pixel of an image by value described by a
+ * given gradient. Weights remain unchanged.
+ *
+ * \param image Image to be modified
+ * \param grad Gradient
+ *
+ * \sa SImage_mul, SImage_mulConst, SImage_mulConstRGB, SImage_divGradient */
+void SImage_mulGradient(SImage_t *image, const SGradient_t *grad);
+
+/** \brief Divide image by a gradient
+ *
+ * This function divides each pixel of an image by value described by a
+ * given gradient. Weights remain unchanged.
+ *
+ * \param image Image to be modified
+ * \param grad Gradient
+ *
+ * \sa SImage_div, SImage_divConst, SImage_divConstRGB, SImage_mulGradient */
+void SImage_divGradient(SImage_t *image, const SGradient_t *grad);
+
 /** @} */
 /* ========================================================================= */
 /** @name Image gradient
  * @{ */
 
+/** \brief Create constant grayscale gradient
+ *
+ * \param bias Bias (constant term) of the gradient
+ *
+ * \return Constant grayscale gradient
+ */
+inline static SGrayGradient_t SGrayGradient_const(float bias)
+  __attribute__((unused));
+
+inline static SGrayGradient_t SGrayGradient_const(float bias) {
+  return (SGrayGradient_t){
+    .bias = bias,
+    .coef = SVec2f(0.0f, 0.0f),
+  };
+}
+
+/** \brief Create constant gradient
+ *
+ * \param bias Bias (constant term) of the gradient
+ *
+ * \return Constant gradient
+ */
+inline static SGradient_t SGradient_const(float bias)
+  __attribute__((unused));
+
+inline static SGradient_t SGradient_const(float bias) {
+  return (SGradient_t){
+    .is_color = 0,
+    .gray     = SGrayGradient_const(bias),
+  };
+}
 
 /** \brief Get value of grayscale gradient
  *
@@ -1190,6 +1243,84 @@ inline static float SGrayGradient_value(SGrayGradient_t grad, float x, float y)
   SVec2f_t v = SVec2f(x, y) * grad.coef;
   return grad.bias + v[0] + v[1];
 }
+
+/** \brief Get gray component of a gradient
+ *
+ * If a gradient is in color mode, then the average of RGB components is
+ * returned.
+ *
+ * \param grad Gradient
+ *
+ * \sa SGradient_redGradient, SGradient_greenGradient,
+ *   SGradient_blueGradient
+ */
+SGrayGradient_t SGradient_grayGradient(const SGradient_t *grad);
+
+/** \brief Get red component of a gradient
+ *
+ * If a gradient is in grayscale mode, then the gray component is returned.
+ *
+ * \param grad Gradient
+ *
+ * \sa SGradient_grayGradient, SGradient_greenGradient,
+ *   SGradient_blueGradient
+ */
+static inline SGrayGradient_t SGradient_redGradient(const SGradient_t *grad)
+  __attribute__((unused));
+
+static inline SGrayGradient_t SGradient_redGradient(const SGradient_t *grad) {
+  return grad->is_color ? grad->red : grad->gray;
+}
+
+/** \brief Get green component of a gradient
+ *
+ * If a gradient is in grayscale mode, then the gray component is returned.
+ *
+ * \param grad Gradient
+ *
+ * \sa SGradient_grayGradient, SGradient_redGradient,
+ *   SGradient_blueGradient
+ */
+static inline SGrayGradient_t SGradient_greenGradient(const SGradient_t *grad)
+  __attribute__((unused));
+
+static inline SGrayGradient_t SGradient_greenGradient(const SGradient_t *grad)
+{
+  return grad->is_color ? grad->green : grad->gray;
+}
+
+/** \brief Get blue component of a gradient
+ *
+ * If a gradient is in grayscale mode, then the gray component is returned.
+ *
+ * \param grad Gradient
+ *
+ * \sa SGradient_grayGradient, SGradient_redGradient,
+ *   SGradient_greenGradient
+ */
+static inline SGrayGradient_t SGradient_blueGradient(const SGradient_t *grad)
+  __attribute__((unused));
+
+static inline SGrayGradient_t SGradient_blueGradient(const SGradient_t *grad)
+{
+  return grad->is_color ? grad->blue : grad->gray;
+}
+
+/** \brief Convert gradient to grayscale mode
+ *
+ * \param grad Gradient to convert
+ *
+ * \sa SGradient_toColor
+ */
+void SGradient_toGray(SGradient_t *grad);
+
+/** \brief Convert gradient to color mode
+ *
+ * \param grad Gradient to convert
+ *
+ * \sa SGradient_toGray
+ */
+void SGradient_toColor(SGradient_t *grad);
 
 /** \brief Negate (additive inverse) gradient
  *
